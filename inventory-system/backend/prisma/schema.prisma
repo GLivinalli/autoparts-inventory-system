@@ -1,0 +1,173 @@
+// Schema do banco de dados - Sistema de Inventario de Pecas Automotivas (V1)
+// Principio fundamental: a quantidade de uma peca NUNCA e alterada diretamente.
+// Toda mudanca de estoque nasce de um registro em InventoryMovement, dentro
+// de uma transacao que tambem atualiza Part.quantity (ver movements.repository.ts).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum PartCondition {
+  SEM_DANO
+  COM_DANO
+}
+
+enum PartSide {
+  DIANTEIRO
+  TRASEIRO
+  LATERAL
+  ESQUERDO
+  DIREITO
+  INTERNO
+  EXTERNO
+  SUPERIOR
+  INFERIOR
+  CENTRAL
+  NAO_SE_APLICA
+}
+
+enum MovementType {
+  ENTRADA
+  RETIRADA
+}
+
+// Permissoes granulares que sobrescrevem o padrao do Role para um usuario comum.
+// Fica em uma tabela separada (1-1) em vez de colunas soltas em User para deixar
+// facil adicionar novas permissoes no futuro sem migrar a tabela de usuarios toda vez.
+model UserPermission {
+  id              String  @id @default(uuid())
+  userId          String  @unique
+  user            User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  canCreateParts  Boolean @default(false)
+  canEditParts    Boolean @default(false)
+  canArchiveParts Boolean @default(false)
+  canStockIn      Boolean @default(false)
+  canStockOut     Boolean @default(false)
+  canManageUsers  Boolean @default(false)
+
+  @@map("user_permissions")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         Role     @default(USER)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  permission        UserPermission?
+  partsCreated      Part[]               @relation("PartCreatedBy")
+  movementsRecorded InventoryMovement[]  @relation("MovementUser")
+  auditLogs         AuditLog[]
+  refreshTokens     RefreshToken[]
+
+  @@index([email])
+  @@map("users")
+}
+
+// Refresh tokens sao guardados (com hash) para permitir revogacao/logout real,
+// em vez de confiar apenas na expiracao do JWT.
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique @map("token_hash")
+  expiresAt DateTime @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model Manufacturer {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+
+  parts Part[]
+
+  @@index([name])
+  @@map("manufacturers")
+}
+
+model Part {
+  id             String        @id @default(uuid())
+  photoUrl       String?       @map("photo_url")
+  name           String
+  sku            String        @unique
+  manufacturerId String        @map("manufacturer_id")
+  manufacturer   Manufacturer  @relation(fields: [manufacturerId], references: [id], onDelete: Restrict)
+  side           PartSide      @map("side")
+  condition      PartCondition @default(SEM_DANO)
+  damageNotes    String?       @map("damage_notes")
+  // Quantidade atual. So pode ser alterada pelo movements.service dentro de
+  // uma transacao que tambem grava o InventoryMovement correspondente.
+  quantity       Int           @default(0)
+  inventoryDate  DateTime      @map("inventory_date") @db.Date
+  createdById    String        @map("created_by")
+  createdBy      User          @relation("PartCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+  archivedAt     DateTime?     @map("archived_at")
+
+  movements InventoryMovement[]
+
+  @@index([sku])
+  @@index([name])
+  @@index([manufacturerId])
+  @@index([condition])
+  @@index([archivedAt])
+  @@map("parts")
+}
+
+model InventoryMovement {
+  id              String       @id @default(uuid())
+  partId          String       @map("part_id")
+  part            Part         @relation(fields: [partId], references: [id], onDelete: Restrict)
+  type            MovementType
+  quantity        Int
+  quantityBefore  Int          @map("quantity_before")
+  quantityAfter   Int          @map("quantity_after")
+  userId          String       @map("user_id")
+  user            User         @relation("MovementUser", fields: [userId], references: [id], onDelete: Restrict)
+  description     String?
+  createdAt       DateTime     @default(now()) @map("created_at")
+
+  @@index([partId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("inventory_movements")
+}
+
+// Trilha de auditoria de acoes sensiveis (criacao/edicao/arquivamento de peca,
+// movimentacoes, gestao de usuarios). Nao pode ser apagada por usuarios comuns
+// (ver audit.routes.ts - somente leitura, nenhuma rota de delete e exposta).
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id")
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  entity    String
+  entityId  String?  @map("entity_id")
+  before    Json?
+  after     Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([entity, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}

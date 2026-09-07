@@ -1,0 +1,25 @@
+version: "3.8"
+
+# Sobe apenas o Postgres para desenvolvimento local.
+# Backend e frontend rodam com `npm run dev` fora do Docker.
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: autoparts_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: autoparts
+      POSTGRES_PASSWORD: autoparts
+      POSTGRES_DB: autoparts_inventory
+    ports:
+      - "5432:5432"
+    volumes:
+      - autoparts_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U autoparts"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  autoparts_pg_data:
