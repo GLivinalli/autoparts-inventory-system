@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { fileTypeFromBuffer } from "file-type";
+import { fromBuffer as fileTypeFromBuffer } from "file-type";
 import { env } from "@/config/env";
 import { AppError } from "@/utils/AppError";
 
