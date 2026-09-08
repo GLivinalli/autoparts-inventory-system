@@ -11,11 +11,14 @@ const ACCESS_COOKIE = "access_token";
 const REFRESH_COOKIE = "refresh_token";
 
 function cookieOptions(maxAgeMs: number) {
+  const secure = isProduction || env.COOKIE_SECURE;
   return {
     httpOnly: true,
-    secure: isProduction || env.COOKIE_SECURE,
-    sameSite: "strict" as const,
-    domain: env.NODE_ENV === "development" ? undefined : env.COOKIE_DOMAIN,
+    secure,
+    // "none" e obrigatorio quando frontend e backend estao em dominios
+    // diferentes (ex.: dois servicos separados no Render). Exige Secure=true,
+    // que o Render ja garante via HTTPS.
+    sameSite: secure ? ("none" as const) : ("lax" as const),
     maxAge: maxAgeMs,
     path: "/",
   };
