@@ -4,6 +4,7 @@ import { Badge } from "@/components/common/Badge";
 import { Spinner } from "@/components/common/Spinner";
 import { Pagination } from "@/components/common/Pagination";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { ImageLightbox } from "@/components/common/ImageLightbox";
 import { useAuth } from "@/context/AuthContext";
 import { getPart, archivePart, unarchivePart } from "@/api/parts";
 import { getApiErrorMessage } from "@/api/client";
@@ -37,6 +38,7 @@ export function PartDetailModal({
   const [confirmingArchive, setConfirmingArchive] = useState(false);
   const [archiving, setArchiving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -98,14 +100,52 @@ export function PartDetailModal({
         {part && !loading && (
           <div className="p-5">
             <div className="flex gap-4">
-              <div className="h-28 w-28 shrink-0 overflow-hidden rounded bg-surface">
-                {part.photoUrl && <img src={part.photoUrl} alt={part.name} className="h-full w-full object-cover" />}
+              <div className="flex shrink-0 gap-2">
+                <button
+                  type="button"
+                  onClick={() => part.photoUrl && setLightboxSrc(part.photoUrl)}
+                  disabled={!part.photoUrl}
+                  className="h-28 w-28 overflow-hidden rounded bg-surface disabled:cursor-default"
+                  aria-label="Ampliar foto da peca"
+                >
+                  {part.photoUrl ? (
+                    <img
+                      src={part.photoUrl}
+                      alt={part.name}
+                      className="h-full w-full cursor-zoom-in object-cover transition hover:opacity-90"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-muted">
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <path d="M3 8h18l-1.5 12.5A2 2 0 0 1 17.5 22h-11a2 2 0 0 1-2-1.5L3 8Z" />
+                      </svg>
+                    </div>
+                  )}
+                </button>
+
+                {part.condition === "COM_DANO" && part.damagePhotoUrl && (
+                  <button
+                    type="button"
+                    onClick={() => setLightboxSrc(part.damagePhotoUrl)}
+                    className="relative h-28 w-28 overflow-hidden rounded bg-surface"
+                    aria-label="Ampliar foto do dano"
+                  >
+                    <img
+                      src={part.damagePhotoUrl}
+                      alt={`Dano em ${part.name}`}
+                      className="h-full w-full cursor-zoom-in object-cover transition hover:opacity-90"
+                    />
+                    <span className="absolute bottom-0 left-0 right-0 bg-danger/85 py-0.5 text-center text-[10px] font-medium text-white">
+                      Dano
+                    </span>
+                  </button>
+                )}
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <h3 className="font-display text-2xl font-semibold text-ink">{part.name}</h3>
-                    <p className="font-mono text-sm text-muted">{part.sku}</p>
+                    <p className="font-mono text-sm text-muted">{part.sku || "Sem SKU"}</p>
                   </div>
                   {part.archivedAt && <Badge tone="neutral">Arquivada</Badge>}
                 </div>
@@ -232,6 +272,10 @@ export function PartDetailModal({
         onConfirm={handleArchiveToggle}
         onCancel={() => setConfirmingArchive(false)}
       />
+
+      {lightboxSrc && (
+        <ImageLightbox src={lightboxSrc} alt={part?.name ?? "Foto"} onClose={() => setLightboxSrc(null)} />
+      )}
     </div>
   );
 }
