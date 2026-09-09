@@ -5,16 +5,12 @@ export const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:33
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
-  // Envia/recebe os cookies HttpOnly de sessao em toda requisicao.
   withCredentials: true,
 });
 
 let isRefreshing = false;
 let pendingQueue: Array<() => void> = [];
 
-// Se o access token expirou (401), tenta renovar via /auth/refresh uma unica
-// vez e repete a requisicao original. Varias chamadas 401 simultaneas
-// esperam a mesma renovacao em vez de disparar N refreshes em paralelo.
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
@@ -40,8 +36,6 @@ api.interceptors.response.use(
       return api(originalRequest);
     } catch (refreshError) {
       pendingQueue = [];
-      // Marca que a sessao caiu por expiracao, para a tela de login mostrar
-      // um aviso amigavel em vez do usuario so "cair" sem explicacao.
       sessionStorage.setItem("session_expired", "1");
       window.location.assign("/login");
       return Promise.reject(refreshError);
@@ -59,11 +53,6 @@ export function getApiErrorMessage(error: unknown, fallback = "Ocorreu um erro. 
   return fallback;
 }
 
-// ---- Cache leve em memoria para GETs ----
-// Reduz buscas repetidas quando o usuario navega rapido entre telas (ex.:
-// sai da lista de pecas e volta). Sempre que uma criacao/edicao acontece, o
-// codigo chama invalidateCache com o prefixo certo para a proxima leitura
-// vir atualizada.
 const getCache = new Map<string, { expires: number; data: unknown }>();
 const CACHE_TTL_MS = 20_000;
 
