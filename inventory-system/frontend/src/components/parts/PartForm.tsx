@@ -15,6 +15,7 @@ export interface PartFormValues {
   initialQuantity: string;
   inventoryDate: string;
   photoUrl: string | null;
+  damagePhotoUrl: string | null;
 }
 
 function toISODate(value: string) {
@@ -29,9 +30,10 @@ function emptyForm(): PartFormValues {
     side: "",
     condition: "SEM_DANO",
     damageNotes: "",
-    initialQuantity: "0",
+    initialQuantity: "1",
     inventoryDate: new Date().toISOString().slice(0, 10),
     photoUrl: null,
+    damagePhotoUrl: null,
   };
 }
 
@@ -64,14 +66,15 @@ export function PartForm({
     const initial: PartFormValues = editingPart
       ? {
           name: editingPart.name,
-          sku: editingPart.sku,
+          sku: editingPart.sku ?? "",
           manufacturerId: editingPart.manufacturerId,
           side: editingPart.side,
           condition: editingPart.condition,
           damageNotes: editingPart.damageNotes ?? "",
-          initialQuantity: "0",
+          initialQuantity: "1",
           inventoryDate: editingPart.inventoryDate.slice(0, 10),
           photoUrl: editingPart.photoUrl,
+          damagePhotoUrl: editingPart.damagePhotoUrl,
         }
       : emptyForm();
     setValues(initial);
@@ -142,7 +145,10 @@ export function PartForm({
         </div>
 
         <div className="space-y-4">
-          <PhotoUpload value={values.photoUrl} onChange={(url) => setValues((v) => ({ ...v, photoUrl: url }))} />
+          <div>
+            <label className="mb-1 block text-sm font-medium text-ink">Foto da peca</label>
+            <PhotoUpload value={values.photoUrl} onChange={(url) => setValues((v) => ({ ...v, photoUrl: url }))} />
+          </div>
 
           <div>
             <label className="mb-1 block text-sm font-medium text-ink">Nome da peca</label>
@@ -155,30 +161,17 @@ export function PartForm({
             />
           </div>
 
-          {editingPart && (
-            <div>
-              <label className="mb-1 block text-sm font-medium text-ink">SKU</label>
-              <input
-                disabled
-                value={values.sku}
-                className="h-11 w-full rounded border border-line bg-surface px-3 font-mono text-sm text-muted"
-              />
-            </div>
-          )}
-
-          {!editingPart && (
-            <div>
-              <label className="mb-1 block text-sm font-medium text-ink">
-                SKU <span className="font-normal text-muted">(opcional - gerado automaticamente se vazio)</span>
-              </label>
-              <input
-                value={values.sku}
-                onChange={(e) => setValues((v) => ({ ...v, sku: e.target.value.toUpperCase() }))}
-                placeholder="AUT-000001"
-                className="h-11 w-full rounded border border-line px-3 font-mono text-sm focus:border-accent"
-              />
-            </div>
-          )}
+          <div>
+            <label className="mb-1 block text-sm font-medium text-ink">
+              SKU <span className="font-normal text-muted">(opcional - qualquer codigo, ou deixe em branco)</span>
+            </label>
+            <input
+              value={values.sku}
+              onChange={(e) => setValues((v) => ({ ...v, sku: e.target.value }))}
+              placeholder="Ex.: 12345, PECA-A1, ou deixe vazio"
+              className="h-11 w-full rounded border border-line px-3 font-mono text-sm focus:border-accent"
+            />
+          </div>
 
           <div>
             <label className="mb-1 block text-sm font-medium text-ink">Montadora</label>
@@ -245,14 +238,23 @@ export function PartForm({
               ))}
             </div>
             {values.condition === "COM_DANO" && (
-              <textarea
-                required
-                value={values.damageNotes}
-                onChange={(e) => setValues((v) => ({ ...v, damageNotes: e.target.value }))}
-                placeholder="Descreva o dano. Ex.: Risco na lateral direita."
-                rows={2}
-                className="mt-2 w-full rounded border border-line px-3 py-2 text-sm focus:border-accent"
-              />
+              <div className="mt-2 space-y-3">
+                <textarea
+                  required
+                  value={values.damageNotes}
+                  onChange={(e) => setValues((v) => ({ ...v, damageNotes: e.target.value }))}
+                  placeholder="Descreva o dano. Ex.: Risco na lateral direita."
+                  rows={2}
+                  className="w-full rounded border border-line px-3 py-2 text-sm focus:border-accent"
+                />
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-ink">Foto do dano</label>
+                  <PhotoUpload
+                    value={values.damagePhotoUrl}
+                    onChange={(url) => setValues((v) => ({ ...v, damagePhotoUrl: url }))}
+                  />
+                </div>
+              </div>
             )}
           </div>
 
