@@ -44,8 +44,9 @@ export interface Manufacturer {
 export interface Part {
   id: string;
   photoUrl: string | null;
+  damagePhotoUrl: string | null;
   name: string;
-  sku: string;
+  sku: string | null;
   manufacturerId: string;
   manufacturer: Manufacturer;
   side: PartSide;
