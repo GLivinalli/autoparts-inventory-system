@@ -100,10 +100,12 @@ export function PartsList() {
     if (editingPart) {
       await partsApi.updatePart(editingPart.id, {
         name: values.name,
+        sku: values.sku || undefined,
         manufacturerId: values.manufacturerId,
         side: values.side,
         condition: values.condition,
         damageNotes: values.condition === "COM_DANO" ? values.damageNotes : undefined,
+        damagePhotoUrl: values.condition === "COM_DANO" ? values.damagePhotoUrl : null,
         inventoryDate: values.inventoryDate,
         photoUrl: values.photoUrl,
       });
@@ -116,6 +118,7 @@ export function PartsList() {
         side: values.side,
         condition: values.condition,
         damageNotes: values.condition === "COM_DANO" ? values.damageNotes : undefined,
+        damagePhotoUrl: values.condition === "COM_DANO" ? values.damagePhotoUrl : null,
         initialQuantity: Number(values.initialQuantity) || 0,
         inventoryDate: values.inventoryDate,
         photoUrl: values.photoUrl,
@@ -123,9 +126,6 @@ export function PartsList() {
       notify("Peca cadastrada com sucesso", "success");
     }
     setFormOpen(false);
-    setEditingPart(null);
-    refreshList();
-  }
 
   async function handleMovementSubmit(quantity: number, description?: string) {
     if (!movementModal) return;
