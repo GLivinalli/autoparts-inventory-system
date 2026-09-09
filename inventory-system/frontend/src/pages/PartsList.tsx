@@ -126,6 +126,9 @@ export function PartsList() {
       notify("Peca cadastrada com sucesso", "success");
     }
     setFormOpen(false);
+    setEditingPart(null);
+    refreshList();
+  }
 
   async function handleMovementSubmit(quantity: number, description?: string) {
     if (!movementModal) return;
