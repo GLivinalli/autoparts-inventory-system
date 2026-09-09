@@ -14,10 +14,10 @@ function cookieOptions(maxAgeMs: number) {
   return {
     httpOnly: true,
     secure: true, // sempre HTTPS agora, tanto no Vercel quanto no Render
-    // "lax" funciona bem aqui porque app e api sao subdominios do MESMO
-    // dominio registrado (inventarioautogama.com.br) - navegadores tratam
-    // isso como "same-site", diferente do caso anterior com dominios
-    // onrender.com/vercel.app separados.
+    // "lax" funciona bem aqui porque app (www.) e api. sao subdominios do
+    // MESMO dominio registrado (inventarioautogama.com.br) - navegadores
+    // tratam isso como "same-site", diferente de quando front e back
+    // estavam em dominios totalmente separados (onrender.com/vercel.app).
     sameSite: "lax" as const,
     domain: env.COOKIE_DOMAIN, // ".inventarioautogama.com.br"
     maxAge: maxAgeMs,
