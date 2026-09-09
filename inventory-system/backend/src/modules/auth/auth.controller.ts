@@ -11,14 +11,15 @@ const ACCESS_COOKIE = "access_token";
 const REFRESH_COOKIE = "refresh_token";
 
 function cookieOptions(maxAgeMs: number) {
-  const secure = isProduction || env.COOKIE_SECURE;
   return {
     httpOnly: true,
-    secure,
-    // "none" e obrigatorio quando frontend e backend estao em dominios
-    // diferentes (ex.: dois servicos separados no Render). Exige Secure=true,
-    // que o Render ja garante via HTTPS.
-    sameSite: secure ? ("none" as const) : ("lax" as const),
+    secure: true, // sempre HTTPS agora, tanto no Vercel quanto no Render
+    // "lax" funciona bem aqui porque app e api sao subdominios do MESMO
+    // dominio registrado (inventarioautogama.com.br) - navegadores tratam
+    // isso como "same-site", diferente do caso anterior com dominios
+    // onrender.com/vercel.app separados.
+    sameSite: "lax" as const,
+    domain: env.COOKIE_DOMAIN, // ".inventarioautogama.com.br"
     maxAge: maxAgeMs,
     path: "/",
   };
