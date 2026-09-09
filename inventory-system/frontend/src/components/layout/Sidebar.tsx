@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
 const NAV_ICON_CLASS = "shrink-0";
@@ -78,9 +78,16 @@ export function Sidebar() {
         <p className="truncate px-2 text-sm font-medium text-white">{user?.name}</p>
         <p className="truncate px-2 text-xs text-white/50">{user?.email}</p>
         <button
+        <Link
+          to="/trocar-senha"
+          className="mt-3 block rounded px-2 py-2 text-left text-sm font-medium text-white/70 hover:bg-white/5 hover:text-white"
+        >
+        Trocar senha
+        </Link>
+        <button
           type="button"
           onClick={logout}
-          className="mt-3 w-full rounded px-2 py-2 text-left text-sm font-medium text-white/70 hover:bg-white/5 hover:text-white"
+          className="w-full rounded px-2 py-2 text-left text-sm font-medium text-white/70 hover:bg-white/5 hover:text-white"
         >
           Sair
         </button>
