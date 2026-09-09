@@ -2,7 +2,6 @@ import { MovementType, Prisma } from "@prisma/client";
 import { prisma } from "@/db/prisma";
 import { AppError } from "@/utils/AppError";
 import { parsePagination, toPaginatedResult } from "@/utils/pagination";
-import { generateNextSku } from "@/utils/sku";
 import { logAudit } from "@/modules/audit/audit.service";
 import { applyMovement } from "@/modules/movements/movements.service";
 import * as movementsRepo from "@/modules/movements/movements.repository";
@@ -52,10 +51,16 @@ export async function getPartDetail(id: string, historyPage: Record<string, unkn
 }
 
 export async function createPart(input: CreatePartInput, userId: string) {
-  const sku = input.sku ?? (await generateNextSku());
+  // SKU agora e opcional e de texto livre. Se nao for informado, fica NULL
+  // no banco (permitido varias vezes, ja que a restricao UNIQUE do Postgres
+  // nao considera NULL == NULL). So checamos duplicidade quando um SKU foi
+  // de fato digitado.
+  const sku = input.sku ?? null;
 
-  const existing = await repo.findBySku(sku);
-  if (existing) throw AppError.conflict(`Ja existe uma peca com o SKU ${sku}`);
+  if (sku) {
+    const existing = await repo.findBySku(sku);
+    if (existing) throw AppError.conflict(`Ja existe uma peca com o SKU ${sku}`);
+  }
 
   const part = await prisma.$transaction(async (tx) => {
     const created = await repo.create(
@@ -66,6 +71,8 @@ export async function createPart(input: CreatePartInput, userId: string) {
         side: input.side,
         condition: input.condition,
         damageNotes: input.condition === "COM_DANO" ? input.damageNotes : null,
+        // Foto do dano so faz sentido quando a peca esta marcada "Com dano".
+        damagePhotoUrl: input.condition === "COM_DANO" ? input.damagePhotoUrl ?? null : null,
         quantity: 0,
         inventoryDate: input.inventoryDate,
         photoUrl: input.photoUrl ?? null,
@@ -105,13 +112,26 @@ export async function updatePart(id: string, input: UpdatePartInput, userId: str
   if (!before) throw AppError.notFound("Peca nao encontrada");
   if (before.archivedAt) throw AppError.validation("Nao e possivel editar uma peca arquivada");
 
+  // Se um SKU novo foi informado e e diferente do atual, confere duplicidade
+  // antes de gravar (a constraint UNIQUE do banco tambem protege isso, mas
+  // aqui devolvemos uma mensagem amigavel em vez do erro generico).
+  if (input.sku && input.sku !== before.sku) {
+    const existing = await repo.findBySku(input.sku);
+    if (existing && existing.id !== id) {
+      throw AppError.conflict(`Ja existe uma peca com o SKU ${input.sku}`);
+    }
+  }
+
   const nextCondition = input.condition ?? before.condition;
   const part = await repo.update(id, {
     name: input.name,
+    sku: input.sku,
     manufacturer: input.manufacturerId ? { connect: { id: input.manufacturerId } } : undefined,
     side: input.side,
     condition: input.condition,
     damageNotes: nextCondition === "COM_DANO" ? input.damageNotes ?? before.damageNotes : null,
+    damagePhotoUrl:
+      nextCondition === "COM_DANO" ? input.damagePhotoUrl ?? before.damagePhotoUrl : null,
     inventoryDate: input.inventoryDate,
     photoUrl: input.photoUrl,
   });
