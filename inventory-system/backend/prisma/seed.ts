@@ -18,9 +18,9 @@ const DEFAULT_MANUFACTURERS = [
 ];
 
 async function main() {
-  const adminEmail = (process.env.SEED_ADMIN_EMAIL ?? "admin@autogama.com").toLowerCase();
+  const adminEmail = (process.env.SEED_ADMIN_EMAIL ?? "admin@autoparts.local").toLowerCase();
   const adminName = process.env.SEED_ADMIN_NAME ?? "Administrador";
-  const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? "auto2026gama";
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? "TrocarSenha123!";
 
   const existingAdmin = await prisma.user.findUnique({ where: { email: adminEmail } });
 
