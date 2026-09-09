@@ -40,6 +40,7 @@ api.interceptors.response.use(
       return api(originalRequest);
     } catch (refreshError) {
       pendingQueue = [];
+      sessionStorage.setItem("session_expired", "1");
       window.location.assign("/login");
       return Promise.reject(refreshError);
     } finally {
