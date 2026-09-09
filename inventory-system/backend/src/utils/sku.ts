@@ -14,7 +14,7 @@ export async function generateNextSku(): Promise<string> {
   });
 
   let nextNumber = 1;
-  if (lastPart) {
+  if (lastPart?.sku) {
     const match = lastPart.sku.match(/(\d+)$/);
     if (match) {
       nextNumber = parseInt(match[1], 10) + 1;
