@@ -31,7 +31,7 @@ export function PartTable({ parts, onSelect }: { parts: Part[]; onSelect: (part:
                 <span className="font-medium text-ink">{part.name}</span>
               </div>
             </td>
-            <td className="border-b border-line py-2.5 font-mono text-xs text-muted">{part.sku}</td>
+            <td className="border-b border-line py-2.5 font-mono text-xs text-muted">{part.sku || "Sem SKU"}</td>
             <td className="border-b border-line py-2.5 text-ink-soft">{part.manufacturer.name}</td>
             <td className="border-b border-line py-2.5 text-ink-soft">{SIDE_LABELS[part.side]}</td>
             <td className="border-b border-line py-2.5">
