@@ -1,5 +1,4 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
-const initialSnapshotRef = useRef("");
 import type { Manufacturer, Part, PartCondition, PartSide } from "@/types";
 import { SIDE_LABELS } from "@/utils/labels";
 import { PhotoUpload } from "./PhotoUpload";
@@ -58,6 +57,7 @@ export function PartForm({
   const [addingManufacturer, setAddingManufacturer] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const initialSnapshotRef = useRef("");
 
   useEffect(() => {
     if (!open) return;
@@ -78,6 +78,9 @@ export function PartForm({
     initialSnapshotRef.current = JSON.stringify(initial);
     setError(null);
   }, [open, editingPart]);
+
+  if (!open) return null;
+
   function handleRequestClose() {
     const isDirty = JSON.stringify(values) !== initialSnapshotRef.current;
     if (isDirty && !window.confirm("Voce tem alteracoes nao salvas. Deseja realmente fechar sem salvar?")) {
@@ -85,8 +88,6 @@ export function PartForm({
     }
     onClose();
   }
-
-  if (!open) return null;
 
   async function handleAddManufacturer() {
     if (!newManufacturer.trim()) return;
