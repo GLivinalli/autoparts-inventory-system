@@ -21,9 +21,21 @@ export const app = express();
 app.use(helmet());
 
 // So aceita requisicoes do frontend configurado, com cookies inclusos.
+const allowedOrigins = [
+  env.FRONTEND_URL,
+  env.FRONTEND_URL.replace("https://www.", "https://"),
+  env.FRONTEND_URL.replace("https://", "https://www."),
+];
+
 app.use(
   cors({
-    origin: env.FRONTEND_URL,
+    origin: (origin, callback) => {
+      // Sem "origin" (ex.: chamadas server-to-server, healthcheck) sempre libera.
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      callback(new Error("Bloqueado por CORS"));
+    },
     credentials: true,
   })
 );
