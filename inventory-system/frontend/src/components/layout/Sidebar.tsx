@@ -77,12 +77,11 @@ export function Sidebar() {
       <div className="mt-4 border-t border-white/10 pt-4">
         <p className="truncate px-2 text-sm font-medium text-white">{user?.name}</p>
         <p className="truncate px-2 text-xs text-white/50">{user?.email}</p>
-        <button
         <Link
           to="/trocar-senha"
           className="mt-3 block rounded px-2 py-2 text-left text-sm font-medium text-white/70 hover:bg-white/5 hover:text-white"
         >
-        Trocar senha
+          Trocar senha
         </Link>
         <button
           type="button"
