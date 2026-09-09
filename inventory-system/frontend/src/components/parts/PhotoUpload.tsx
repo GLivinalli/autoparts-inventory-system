@@ -11,6 +11,41 @@ interface PhotoUploadProps {
 // Aceita tanto upload de arquivo quanto captura direta pela camera do
 // celular (o atributo `capture` abre a camera em navegadores mobile),
 // conforme spec item 1.
+// Reduz a foto para no maximo 1600px no lado maior e comprime como JPEG
+// antes de subir. Uma foto de celular que chega com 6-8MB normalmente sai
+// daqui com poucas centenas de KB, sem perda visivel de qualidade na lista.
+async function resizeImage(file: File, maxDimension = 1600, quality = 0.82): Promise<File> {
+  if (!file.type.startsWith("image/")) return file;
+
+  const dataUrl = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+
+  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = reject;
+    image.src = dataUrl;
+  });
+
+  const scale = Math.min(1, maxDimension / Math.max(img.width, img.height));
+  if (scale >= 1) return file; // ja e pequena, nao mexe
+
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(img.width * scale);
+  canvas.height = Math.round(img.height * scale);
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return file;
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
+  if (!blob) return file;
+
+  return new File([blob], file.name.replace(/\.\w+$/, ".jpg"), { type: "image/jpeg" });
+}
 export function PhotoUpload({ value, onChange }: PhotoUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +57,8 @@ export function PhotoUpload({ value, onChange }: PhotoUploadProps) {
     setError(null);
     setUploading(true);
     try {
-      const url = await uploadPartPhoto(file);
+      const resized = await resizeImage(file);
+      const url = await uploadPartPhoto(resized);
       onChange(url);
     } catch (err) {
       setError(getApiErrorMessage(err, "Nao foi possivel enviar a foto"));
