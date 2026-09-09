@@ -38,21 +38,29 @@ export interface CreatePartPayload {
 
 export async function createPart(payload: CreatePartPayload) {
   const { data } = await api.post<{ part: Part }>("/parts", payload);
+  invalidateCache("/parts");
+  invalidateCache("/dashboard");
   return data.part;
 }
 
 export async function updatePart(id: string, payload: Partial<CreatePartPayload>) {
   const { data } = await api.patch<{ part: Part }>(`/parts/${id}`, payload);
+  invalidateCache("/parts");
+  invalidateCache("/dashboard");
   return data.part;
 }
 
 export async function archivePart(id: string) {
   const { data } = await api.post<{ part: Part }>(`/parts/${id}/archive`);
+  invalidateCache("/parts");
+  invalidateCache("/dashboard");
   return data.part;
 }
 
 export async function unarchivePart(id: string) {
   const { data } = await api.post<{ part: Part }>(`/parts/${id}/unarchive`);
+  invalidateCache("/parts");
+  invalidateCache("/dashboard");
   return data.part;
 }
 
