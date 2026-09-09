@@ -8,6 +8,7 @@ import { Dashboard } from "@/pages/Dashboard";
 import { PartsList } from "@/pages/PartsList";
 import { History } from "@/pages/History";
 import { Users } from "@/pages/Users";
+import { ChangePassword } from "@/pages/ChangePassword";
 
 export function App() {
   return (
@@ -19,6 +20,7 @@ export function App() {
 
             <Route element={<ProtectedRoute />}>
               <Route element={<Layout />}>
+                <Route path="/trocar-senha" element={<ChangePassword />} />
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/pecas" element={<PartsList />} />
                 <Route path="/historico" element={<History />} />
