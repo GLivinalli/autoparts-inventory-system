@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import type { Manufacturer, Part, PartCondition, PartSide } from "@/types";
 import { SIDE_LABELS } from "@/utils/labels";
 import { PhotoUpload } from "./PhotoUpload";
