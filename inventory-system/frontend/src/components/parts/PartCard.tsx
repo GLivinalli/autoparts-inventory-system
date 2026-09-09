@@ -25,7 +25,7 @@ export function PartCard({ part, onClick }: { part: Part; onClick: () => void })
 
       <div className="min-w-0 flex-1">
         <p className="truncate font-medium text-ink">{part.name}</p>
-        <p className="font-mono text-xs text-muted">{part.sku}</p>
+        <p className="font-mono text-xs text-muted">{part.sku || "Sem SKU"}</p>
         <div className="mt-1 flex flex-wrap items-center gap-1.5">
           <Badge tone="steel">{part.manufacturer.name}</Badge>
           <Badge tone="neutral">{SIDE_LABELS[part.side]}</Badge>
