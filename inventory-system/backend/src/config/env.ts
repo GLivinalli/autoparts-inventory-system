@@ -41,3 +41,15 @@ if (!parsed.success) {
 
 export const env = parsed.data;
 export const isProduction = env.NODE_ENV === "production";
+
+// Trava de seguranca: nunca deixa o servidor subir em producao usando os
+// segredos de exemplo do .env.example. Isso teria permitido forjar um
+// login de administrador para quem visse o codigo no GitHub.
+const PLACEHOLDER_SECRETS = [
+  "troque-este-valor-em-producao-access",
+  "troque-este-valor-em-producao-refresh",
+];
+if (isProduction && PLACEHOLDER_SECRETS.some((p) => env.JWT_ACCESS_SECRET === p || env.JWT_REFRESH_SECRET === p)) {
+  console.error("JWT_ACCESS_SECRET/JWT_REFRESH_SECRET ainda estao com o valor de exemplo. Troque antes de subir em producao.");
+  process.exit(1);
+}
