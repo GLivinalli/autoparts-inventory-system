@@ -13,8 +13,7 @@ export interface PartsFilters {
 }
 
 export async function listParts(filters: PartsFilters) {
-  const { data } = await api.get<Paginated<Part>>("/parts", { params: filters });
-  return data;
+  return cachedGet<Paginated<Part>>("/parts", filters as Record<string, unknown>);
 }
 
 export async function getPart(id: string, historyPage = 1) {
@@ -31,6 +30,7 @@ export interface CreatePartPayload {
   side: string;
   condition: string;
   damageNotes?: string;
+  damagePhotoUrl?: string | null;
   initialQuantity: number;
   inventoryDate: string;
   photoUrl?: string | null;
