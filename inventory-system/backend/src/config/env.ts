@@ -23,6 +23,10 @@ const envSchema = z.object({
     .transform((v) => v === "true"),
 
   R2_ACCOUNT_ID: z.string().optional().default(""),
+  R2_ACCOUNT_ID: z.string().optional().default(""),
+  // Endpoint completo, usado quando o provedor NAO e a Cloudflare (ex.: Supabase
+  // Storage). Se preenchido, tem prioridade sobre R2_ACCOUNT_ID.
+  STORAGE_ENDPOINT: z.string().optional().default(""),
   R2_ACCESS_KEY_ID: z.string().optional().default(""),
   R2_SECRET_ACCESS_KEY: z.string().optional().default(""),
   R2_BUCKET_NAME: z.string().optional().default(""),
