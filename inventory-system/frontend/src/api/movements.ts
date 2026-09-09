@@ -1,4 +1,4 @@
-import { api } from "./client";
+import { api, invalidateCache } from "./client";
 import type { Movement, MovementType, Paginated } from "@/types";
 
 export async function createMovement(
