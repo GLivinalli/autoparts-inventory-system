@@ -27,8 +27,8 @@ async function issueTokenPair(userId: string, role: string) {
 }
 
 export async function login(input: LoginInput, ip?: string) {
-  const user = await prisma.user.findUnique({
-    where: { email: input.email },
+const user = await prisma.user.findUnique({
+    where: { email: input.email.toLowerCase() },
     include: { permission: true },
   });
 
