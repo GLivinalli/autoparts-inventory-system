@@ -12,6 +12,8 @@ export async function createMovement(
     quantity,
     description,
   });
+  invalidateCache("/parts");
+  invalidateCache("/dashboard");
   return data.movement;
 }
 
