@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
+const initialSnapshotRef = useRef("");
 import type { Manufacturer, Part, PartCondition, PartSide } from "@/types";
 import { SIDE_LABELS } from "@/utils/labels";
 import { PhotoUpload } from "./PhotoUpload";
@@ -60,23 +61,30 @@ export function PartForm({
 
   useEffect(() => {
     if (!open) return;
-    if (editingPart) {
-      setValues({
-        name: editingPart.name,
-        sku: editingPart.sku,
-        manufacturerId: editingPart.manufacturerId,
-        side: editingPart.side,
-        condition: editingPart.condition,
-        damageNotes: editingPart.damageNotes ?? "",
-        initialQuantity: "0",
-        inventoryDate: editingPart.inventoryDate.slice(0, 10),
-        photoUrl: editingPart.photoUrl,
-      });
-    } else {
-      setValues(emptyForm());
-    }
+    const initial: PartFormValues = editingPart
+      ? {
+          name: editingPart.name,
+          sku: editingPart.sku,
+          manufacturerId: editingPart.manufacturerId,
+          side: editingPart.side,
+          condition: editingPart.condition,
+          damageNotes: editingPart.damageNotes ?? "",
+          initialQuantity: "0",
+          inventoryDate: editingPart.inventoryDate.slice(0, 10),
+          photoUrl: editingPart.photoUrl,
+        }
+      : emptyForm();
+    setValues(initial);
+    initialSnapshotRef.current = JSON.stringify(initial);
     setError(null);
   }, [open, editingPart]);
+  function handleRequestClose() {
+    const isDirty = JSON.stringify(values) !== initialSnapshotRef.current;
+    if (isDirty && !window.confirm("Voce tem alteracoes nao salvas. Deseja realmente fechar sem salvar?")) {
+      return;
+    }
+    onClose();
+  }
 
   if (!open) return null;
 
@@ -125,7 +133,7 @@ export function PartForm({
           <h2 className="font-display text-2xl font-semibold text-ink">
             {editingPart ? "Editar peca" : "Cadastrar peca"}
           </h2>
-          <button type="button" onClick={onClose} className="rounded p-1 text-muted hover:bg-surface" aria-label="Fechar">
+          <button type="button" onClick={handleRequestClose} className="rounded p-1 text-muted hover:bg-surface" aria-label="Fechar">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M18 6 6 18M6 6l12 12" />
             </svg>
@@ -276,7 +284,7 @@ export function PartForm({
         </div>
 
         <div className="mt-6 flex justify-end gap-2">
-          <button type="button" onClick={onClose} className="rounded px-4 py-2.5 text-sm font-medium text-muted hover:bg-surface">
+          <button type="button" onClick={handleRequestClose} className="rounded px-4 py-2.5 text-sm font-medium text-muted hover:bg-surface">
             Cancelar
           </button>
           <button
