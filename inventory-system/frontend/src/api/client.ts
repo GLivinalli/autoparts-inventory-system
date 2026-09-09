@@ -40,6 +40,8 @@ api.interceptors.response.use(
       return api(originalRequest);
     } catch (refreshError) {
       pendingQueue = [];
+      // Marca que a sessao caiu por expiracao, para a tela de login mostrar
+      // um aviso amigavel em vez do usuario so "cair" sem explicacao.
       sessionStorage.setItem("session_expired", "1");
       window.location.assign("/login");
       return Promise.reject(refreshError);
@@ -56,11 +58,12 @@ export function getApiErrorMessage(error: unknown, fallback = "Ocorreu um erro. 
   }
   return fallback;
 }
-// Cache simples em memoria para GETs, com validade curta. Reduz buscas
-// repetidas quando o usuario navega rapido entre telas (ex.: sai da lista
-// de pecas e volta), sem precisar de uma biblioteca externa. Chame
-// invalidateCache(prefixo) depois de qualquer criacao/edicao para garantir
-// que a proxima leitura venha atualizada.
+
+// ---- Cache leve em memoria para GETs ----
+// Reduz buscas repetidas quando o usuario navega rapido entre telas (ex.:
+// sai da lista de pecas e volta). Sempre que uma criacao/edicao acontece, o
+// codigo chama invalidateCache com o prefixo certo para a proxima leitura
+// vir atualizada.
 const getCache = new Map<string, { expires: number; data: unknown }>();
 const CACHE_TTL_MS = 20_000;
 
