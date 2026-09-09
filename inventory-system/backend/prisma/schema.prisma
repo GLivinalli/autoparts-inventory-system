@@ -107,8 +107,12 @@ model Manufacturer {
 model Part {
   id             String        @id @default(uuid())
   photoUrl       String?       @map("photo_url")
+  damagePhotoUrl String?       @map("damage_photo_url")
   name           String
-  sku            String        @unique
+  // SKU agora e opcional e de texto livre (numeros, letras, qualquer
+  // formato). Quando nao informado, fica NULL - o Postgres permite varias
+  // linhas com sku NULL sem violar a restricao UNIQUE (NULL != NULL).
+  sku            String?       @unique
   manufacturerId String        @map("manufacturer_id")
   manufacturer   Manufacturer  @relation(fields: [manufacturerId], references: [id], onDelete: Restrict)
   side           PartSide      @map("side")
