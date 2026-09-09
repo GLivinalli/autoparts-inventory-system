@@ -55,3 +55,27 @@ export function getApiErrorMessage(error: unknown, fallback = "Ocorreu um erro. 
   }
   return fallback;
 }
+// Cache simples em memoria para GETs, com validade curta. Reduz buscas
+// repetidas quando o usuario navega rapido entre telas (ex.: sai da lista
+// de pecas e volta), sem precisar de uma biblioteca externa. Chame
+// invalidateCache(prefixo) depois de qualquer criacao/edicao para garantir
+// que a proxima leitura venha atualizada.
+const getCache = new Map<string, { expires: number; data: unknown }>();
+const CACHE_TTL_MS = 20_000;
+
+export async function cachedGet<T>(url: string, params?: Record<string, unknown>): Promise<T> {
+  const key = url + JSON.stringify(params ?? {});
+  const cached = getCache.get(key);
+  if (cached && cached.expires > Date.now()) {
+    return cached.data as T;
+  }
+  const { data } = await api.get<T>(url, { params });
+  getCache.set(key, { expires: Date.now() + CACHE_TTL_MS, data });
+  return data as T;
+}
+
+export function invalidateCache(prefix: string) {
+  for (const key of getCache.keys()) {
+    if (key.startsWith(prefix)) getCache.delete(key);
+  }
+}
