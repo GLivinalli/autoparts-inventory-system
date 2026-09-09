@@ -44,6 +44,11 @@ export function Login() {
         </div>
 
         <form onSubmit={handleSubmit} className="rounded-md bg-white p-6 shadow-lg">
+          {sessionExpired && (
+            <p className="mb-4 rounded border border-accent/30 bg-accent-soft px-3 py-2 text-sm text-accent-dark">
+              Sua sessao expirou. Faca login novamente.
+            </p>
+          )}
           <h1 className="mb-5 font-display text-2xl font-semibold text-ink">Entrar</h1>
 
           <label className="mb-1 block text-sm font-medium text-ink">E-mail</label>
