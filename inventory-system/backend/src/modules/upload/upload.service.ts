@@ -8,11 +8,16 @@ import { AppError } from "@/utils/AppError";
 // o binario vive no object storage (Cloudflare R2, compativel com S3).
 const s3 = new S3Client({
   region: "auto",
-  endpoint: env.R2_ACCOUNT_ID ? `https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com` : undefined,
+  endpoint:
+    env.STORAGE_ENDPOINT ||
+    (env.R2_ACCOUNT_ID ? `https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com` : undefined),
   credentials: {
     accessKeyId: env.R2_ACCESS_KEY_ID,
     secretAccessKey: env.R2_SECRET_ACCESS_KEY,
   },
+  // Necessario para o Supabase Storage e outros provedores S3-compativeis
+  // que nao sejam a Cloudflare.
+  forcePathStyle: true,
 });
 
 const ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
