@@ -1,4 +1,4 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { getApiErrorMessage } from "@/api/client";
@@ -9,6 +9,16 @@ export function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [sessionExpired, setSessionExpired] = useState(false);
+
+  useEffect(() => {
+    if (sessionStorage.getItem("session_expired")) {
+      setSessionExpired(true);
+      sessionStorage.removeItem("session_expired");
+    }
+  }, []);
+
+  
 
   if (!loading && user) return <Navigate to="/" replace />;
 
