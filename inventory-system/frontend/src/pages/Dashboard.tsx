@@ -50,7 +50,7 @@ export function Dashboard() {
           to="/pecas"
           className="hidden rounded bg-accent px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-dark sm:block"
         >
-          Ver pecas
+          Ver peças
         </Link>
       </div>
 
