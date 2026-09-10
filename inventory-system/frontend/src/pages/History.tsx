@@ -25,7 +25,7 @@ export function History() {
 
   return (
     <div>
-      <h1 className="font-display text-3xl font-semibold text-ink">Historico de movimentacoes</h1>
+      <h1 className="font-display text-3xl font-semibold text-ink">Histórico de movimentação</h1>
       <p className="mb-5 text-sm text-muted">Registro completo e definitivo de todas as entradas e retiradas</p>
 
       {loading ? (
