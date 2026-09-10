@@ -43,8 +43,8 @@ export function Dashboard() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="font-display text-3xl font-semibold text-ink">Ola, {user?.name.split(" ")[0]}</h1>
-          <p className="text-sm text-muted">Visao geral do inventario</p>
+          <h1 className="font-display text-3xl font-semibold text-ink">Bem Vindo, {user?.name.split(" ")[0]}!</h1>
+          <p className="text-sm text-muted">Visão geral do inventário</p>
         </div>
         <Link
           to="/pecas"
@@ -55,16 +55,15 @@ export function Dashboard() {
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <StatCard label="Pecas cadastradas" value={totals.totalParts} />
+        <StatCard label="Peças cadastradas" value={totals.totalParts} />
         <StatCard label="Total em estoque" value={totals.totalQuantity} />
-        <StatCard label="Sem estoque" value={totals.outOfStock} tone="danger" />
         <StatCard label="Com dano" value={totals.damaged} tone="danger" />
         <StatCard label="Sem dano" value={totals.undamaged} tone="success" />
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-3">
         <section className="rounded border border-line bg-white p-4">
-          <h2 className="mb-3 font-display text-lg font-semibold text-ink">Pecas adicionadas recentemente</h2>
+          <h2 className="mb-3 font-display text-lg font-semibold text-ink">Peças adicionadas recentemente</h2>
           <ul className="divide-y divide-line">
             {recentlyAdded.map((p) => (
               <li key={p.id} className="py-2.5 text-sm">
@@ -72,12 +71,12 @@ export function Dashboard() {
                 <p className="font-mono text-xs text-muted">{p.sku}</p>
               </li>
             ))}
-            {recentlyAdded.length === 0 && <p className="text-sm text-muted">Nenhuma peca cadastrada ainda.</p>}
+            {recentlyAdded.length === 0 && <p className="text-sm text-muted">Nenhuma peça cadastrada ainda.</p>}
           </ul>
         </section>
 
         <section className="rounded border border-line bg-white p-4">
-          <h2 className="mb-3 font-display text-lg font-semibold text-ink">Ultimas entradas</h2>
+          <h2 className="mb-3 font-display text-lg font-semibold text-ink">Últimas entradas</h2>
           <ul className="divide-y divide-line">
             {recentEntradas.map((m) => (
               <li key={m.id} className="py-2.5 text-sm">
@@ -95,7 +94,7 @@ export function Dashboard() {
         </section>
 
         <section className="rounded border border-line bg-white p-4">
-          <h2 className="mb-3 font-display text-lg font-semibold text-ink">Ultimas retiradas</h2>
+          <h2 className="mb-3 font-display text-lg font-semibold text-ink">Últimas retiradas</h2>
           <ul className="divide-y divide-line">
             {recentRetiradas.map((m) => (
               <li key={m.id} className="py-2.5 text-sm">
