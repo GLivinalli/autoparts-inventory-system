@@ -29,7 +29,7 @@ export function Login() {
     try {
       await login(email, password);
     } catch (err) {
-      setError(getApiErrorMessage(err, "E-mail ou senha invalidos"));
+      setError(getApiErrorMessage(err, "E-mail ou senha inválidos!"));
     } finally {
       setSubmitting(false);
     }
@@ -40,13 +40,13 @@ export function Login() {
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
           <p className="font-display text-4xl font-semibold text-white">AutoParts</p>
-          <p className="mt-1 text-sm text-white/60">Controle de inventario de pecas automotivas</p>
+          <p className="mt-1 text-sm text-white/60">Controle de inventário de peças automotivas</p>
         </div>
 
         <form onSubmit={handleSubmit} className="rounded-md bg-white p-6 shadow-lg">
           {sessionExpired && (
             <p className="mb-4 rounded border border-accent/30 bg-accent-soft px-3 py-2 text-sm text-accent-dark">
-              Sua sessao expirou. Faca login novamente.
+              Sua sessão expirou. Faca login novamente!
             </p>
           )}
           <h1 className="mb-5 font-display text-2xl font-semibold text-ink">Entrar</h1>
