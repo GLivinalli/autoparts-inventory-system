@@ -58,7 +58,7 @@ export function Users() {
     setError(null);
     try {
       await usersApi.createUser({ name, email, password, role, permissions });
-      notify("Usuario criado com sucesso", "success");
+      notify("Usuário criado com sucesso", "success");
       setShowCreate(false);
       setName("");
       setEmail("");
@@ -67,7 +67,7 @@ export function Users() {
       setPermissions(emptyPermissions());
       loadUsers();
     } catch (err) {
-      setError(getApiErrorMessage(err, "Nao foi possivel criar o usuario"));
+      setError(getApiErrorMessage(err, "Não foi possível criar o usuário"));
     } finally {
       setSubmitting(false);
     }
@@ -83,7 +83,7 @@ export function Users() {
     try {
       const updated = await usersApi.updateUser(user.id, { active: !user.active });
       setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
-      notify(updated.active ? "Usuario ativado" : "Usuario desativado", "success");
+      notify(updated.active ? "Usuário ativado" : "Usuário desativado", "success");
     } catch (err) {
       notify(getApiErrorMessage(err), "error");
     }
@@ -93,8 +93,8 @@ export function Users() {
     <div>
       <div className="mb-5 flex items-center justify-between">
         <div>
-          <h1 className="font-display text-3xl font-semibold text-ink">Usuarios</h1>
-          <p className="text-sm text-muted">Gerencie acessos e permissoes</p>
+          <h1 className="font-display text-3xl font-semibold text-ink">Usuários</h1>
+          <p className="text-sm text-muted">Gerência de acessos e permissões</p>
         </div>
         <button
           onClick={() => setShowCreate(true)}
@@ -135,7 +135,7 @@ export function Users() {
 
           <div className="rounded border border-line bg-white p-4">
             {!selected ? (
-              <p className="text-sm text-muted">Selecione um usuario para ver e editar as permissoes.</p>
+              <p className="text-sm text-muted">Selecione um usuário para ver e editar as permissões.</p>
             ) : (
               <div>
                 <div className="mb-3 flex items-center justify-between">
@@ -176,7 +176,7 @@ export function Users() {
       {showCreate && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 sm:items-center sm:p-4">
           <form onSubmit={handleCreate} className="w-full max-w-md rounded-t-md bg-white p-6 shadow-lg sm:rounded-md">
-            <h2 className="mb-4 font-display text-2xl font-semibold text-ink">Novo usuario</h2>
+            <h2 className="mb-4 font-display text-2xl font-semibold text-ink">Novo usuário</h2>
 
             <label className="mb-1 block text-sm font-medium text-ink">Nome</label>
             <input
@@ -195,7 +195,7 @@ export function Users() {
               className="mb-3 h-11 w-full rounded border border-line px-3 text-sm focus:border-accent"
             />
 
-            <label className="mb-1 block text-sm font-medium text-ink">Senha provisoria</label>
+            <label className="mb-1 block text-sm font-medium text-ink">Senha temporária</label>
             <input
               required
               minLength={8}
@@ -211,7 +211,7 @@ export function Users() {
               onChange={(e) => setRole(e.target.value as Role)}
               className="mb-3 h-11 w-full rounded border border-line bg-white px-3 text-sm focus:border-accent"
             >
-              <option value="USER">Usuario comum</option>
+              <option value="USER">Usuário</option>
               <option value="ADMIN">Administrador</option>
             </select>
 
