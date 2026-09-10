@@ -142,7 +142,7 @@ export function PartsList() {
     <div>
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h1 className="font-display text-3xl font-semibold text-ink">Pecas</h1>
+          <h1 className="font-display text-3xl font-semibold text-ink">Peças</h1>
           <p className="text-sm text-muted">Consulte, cadastre e controle o estoque</p>
         </div>
         {can("canCreateParts") && (
@@ -169,7 +169,7 @@ export function PartsList() {
         </div>
       ) : parts.length === 0 ? (
         <div className="rounded border border-dashed border-line bg-white py-16 text-center">
-          <p className="text-sm text-muted">Nenhuma peca encontrada com estes filtros.</p>
+          <p className="text-sm text-muted">Nenhuma peça encontrada com estes filtros.</p>
         </div>
       ) : (
         <>
