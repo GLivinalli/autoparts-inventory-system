@@ -14,6 +14,7 @@ export interface ProductsFilters {
   page?: number;
   pageSize?: number;
   search?: string;
+  archived?: boolean;
 }
 
 export async function listProducts(filters: ProductsFilters) {
@@ -25,6 +26,7 @@ export async function getProduct(id: string, historyPage = 1) {
   const { data } = await api.get<{
     product: Product;
     daysInStock: number | null;
+    stockValueCents: number;
     batches: ProductBatch[];
     history: Paginated<ProductMovement>;
   }>(`/products/${id}`, { params: { page: historyPage, pageSize: 10 } });
@@ -45,6 +47,16 @@ export async function createProduct(payload: CreateProductPayload) {
 
 export async function updateProduct(id: string, payload: { name?: string; manufacturer?: string }) {
   const { data } = await api.patch<{ product: Product }>(`/products/${id}`, payload);
+  return data.product;
+}
+
+export async function archiveProduct(id: string) {
+  const { data } = await api.post<{ product: Product }>(`/products/${id}/archive`);
+  return data.product;
+}
+
+export async function unarchiveProduct(id: string) {
+  const { data } = await api.post<{ product: Product }>(`/products/${id}/unarchive`);
   return data.product;
 }
 
