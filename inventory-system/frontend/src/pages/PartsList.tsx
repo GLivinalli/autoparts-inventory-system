@@ -18,7 +18,7 @@ import * as movementsApi from "@/api/movements";
 import { getApiErrorMessage } from "@/api/client";
 import type { MovementType } from "@/types";
 
-const EMPTY_FILTERS: FilterValues = { manufacturerId: "", side: "", condition: "", stock: "" };
+const EMPTY_FILTERS: FilterValues = { manufacturerId: "", condition: "", stock: "" };
 
 export function PartsList() {
   const { can } = useAuth();
@@ -61,7 +61,6 @@ export function PartsList() {
         pageSize: 20,
         search: debouncedSearch || undefined,
         manufacturerId: filters.manufacturerId || undefined,
-        side: (filters.side || undefined) as never,
         condition: (filters.condition || undefined) as never,
         stock: (filters.stock || undefined) as never,
       })
@@ -86,7 +85,6 @@ export function PartsList() {
         pageSize: 20,
         search: debouncedSearch || undefined,
         manufacturerId: filters.manufacturerId || undefined,
-        side: (filters.side || undefined) as never,
         condition: (filters.condition || undefined) as never,
         stock: (filters.stock || undefined) as never,
       })
@@ -102,7 +100,6 @@ export function PartsList() {
         name: values.name,
         sku: values.sku || undefined,
         manufacturerId: values.manufacturerId,
-        side: values.side,
         condition: values.condition,
         damageNotes: values.condition === "COM_DANO" ? values.damageNotes : undefined,
         damagePhotoUrl: values.condition === "COM_DANO" ? values.damagePhotoUrl : null,
@@ -115,7 +112,6 @@ export function PartsList() {
         name: values.name,
         sku: values.sku || undefined,
         manufacturerId: values.manufacturerId,
-        side: values.side,
         condition: values.condition,
         damageNotes: values.condition === "COM_DANO" ? values.damageNotes : undefined,
         damagePhotoUrl: values.condition === "COM_DANO" ? values.damagePhotoUrl : null,
@@ -142,7 +138,7 @@ export function PartsList() {
     <div>
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h1 className="font-display text-3xl font-semibold text-ink">Peças</h1>
+          <h1 className="font-display text-3xl font-semibold text-ink">Pecas</h1>
           <p className="text-sm text-muted">Consulte, cadastre e controle o estoque</p>
         </div>
         {can("canCreateParts") && (
@@ -169,7 +165,7 @@ export function PartsList() {
         </div>
       ) : parts.length === 0 ? (
         <div className="rounded border border-dashed border-line bg-white py-16 text-center">
-          <p className="text-sm text-muted">Nenhuma peça encontrada com estes filtros.</p>
+          <p className="text-sm text-muted">Nenhuma peca encontrada com estes filtros.</p>
         </div>
       ) : (
         <>
