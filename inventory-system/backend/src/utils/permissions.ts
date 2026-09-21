@@ -1,19 +1,17 @@
 import { Role } from "@prisma/client";
 
-// Nomes das acoes controlaveis por permissao granular. Adicionar uma nova
-// permissao no futuro = adicionar uma chave aqui + uma coluna no
-// UserPermission do schema.prisma, sem tocar no restante do sistema.
 export type PermissionAction =
   | "canCreateParts"
   | "canEditParts"
   | "canArchiveParts"
   | "canStockIn"
   | "canStockOut"
-  | "canManageUsers";
+  | "canManageUsers"
+  | "canManageProducts"
+  | "canStockInProducts"
+  | "canStockOutProducts"
+  | "canDeleteProductMoves";
 
-// ADMIN sempre tem tudo. Para USER, o padrao e restritivo (spec: "usuario
-// comum pode cadastrar/movimentar peças, se autorizado") - a liberacao vem
-// da linha em UserPermission, criada/gerenciada por um administrador.
 const ADMIN_DEFAULTS: Record<PermissionAction, boolean> = {
   canCreateParts: true,
   canEditParts: true,
@@ -21,6 +19,10 @@ const ADMIN_DEFAULTS: Record<PermissionAction, boolean> = {
   canStockIn: true,
   canStockOut: true,
   canManageUsers: true,
+  canManageProducts: true,
+  canStockInProducts: true,
+  canStockOutProducts: true,
+  canDeleteProductMoves: true,
 };
 
 const USER_DEFAULTS: Record<PermissionAction, boolean> = {
@@ -30,6 +32,10 @@ const USER_DEFAULTS: Record<PermissionAction, boolean> = {
   canStockIn: false,
   canStockOut: false,
   canManageUsers: false,
+  canManageProducts: false,
+  canStockInProducts: false,
+  canStockOutProducts: false,
+  canDeleteProductMoves: false,
 };
 
 export interface AuthenticatedUserPermissions {
