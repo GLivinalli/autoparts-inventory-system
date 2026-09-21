@@ -13,7 +13,7 @@ import {
   UpdateProductInput,
 } from "./products.validation";
 
-function toCents(reais: number) {
+function reaisToCents(reais: number) {
   return Math.round(reais * 100);
 }
 
@@ -32,8 +32,6 @@ export async function listProducts(query: ListProductsQuery) {
     repo.count(where),
   ]);
 
-  // "Dias em estoque" = dias desde o lote mais antigo que ainda tem saldo,
-  // igual ao sistema antigo (CONTEXTO.md).
   const batches = await repo.oldestOpenBatchesFor(items.map((p) => p.id));
   const oldestByProduct = new Map<string, Date>();
   for (const b of batches) {
@@ -79,18 +77,56 @@ export async function getProductDetail(id: string, historyPage: Record<string, u
 }
 
 export async function createProduct(input: CreateProductInput, userId: string) {
-  const product = await repo.create({
-    name: input.name,
-    manufacturer: input.manufacturer,
-    createdBy: { connect: { id: userId } },
+  const product = await prisma.$transaction(async (tx) => {
+    const created = await tx.product.create({
+      data: {
+        name: input.name,
+        manufacturer: input.manufacturer,
+        createdBy: { connect: { id: userId } },
+      },
+    });
+
+    if (input.initialQuantity > 0) {
+      const totalCents = reaisToCents(input.totalValueReais ?? 0);
+      const unitCostCents = Math.round(totalCents / input.initialQuantity);
+
+      const movement = await movementsRepo.create(
+        {
+          product: { connect: { id: created.id } },
+          type: MovementType.ENTRADA,
+          quantity: input.initialQuantity,
+          unitCostCents,
+          totalCents,
+          description: "Estoque inicial (cadastro do produto)",
+          user: { connect: { id: userId } },
+        },
+        tx
+      );
+
+      await tx.productBatch.create({
+        data: {
+          productId: created.id,
+          movementId: movement.id,
+          quantityOriginal: input.initialQuantity,
+          quantityRemaining: input.initialQuantity,
+          unitCostCents,
+        },
+      });
+
+      await tx.product.update({ where: { id: created.id }, data: { quantity: input.initialQuantity } });
+    }
+
+    return (await repo.findById(created.id, tx))!;
   });
+
   await logAudit({
     userId,
     action: "CREATE_PRODUCT",
     entity: "Product",
     entityId: product.id,
-    after: { name: product.name, manufacturer: product.manufacturer },
+    after: { name: product.name, manufacturer: product.manufacturer, initialQuantity: input.initialQuantity },
   });
+
   return product;
 }
 
@@ -109,20 +145,13 @@ export async function updateProduct(id: string, input: UpdateProductInput, userI
   return product;
 }
 
-// ---------------------------------------------------------------------------
-// Nucleo do custeio FIFO. Entrada cria um lote com seu proprio custo; saida
-// consome dos lotes mais antigos primeiro, podendo "furar" varios lotes de
-// uma vez. Tudo dentro de uma unica transacao.
-// ---------------------------------------------------------------------------
-
 export async function createEntrada(productId: string, input: CreateEntradaInput, userId: string) {
-  const unitCostCents = toCents(input.unitCostReais);
+  const totalCents = reaisToCents(input.totalValueReais);
+  const unitCostCents = Math.round(totalCents / input.quantity);
 
   const movement = await prisma.$transaction(async (tx) => {
     const product = await tx.product.findUnique({ where: { id: productId } });
     if (!product) throw AppError.notFound("Produto nao encontrado");
-
-    const totalCents = input.quantity * unitCostCents;
 
     const created = await movementsRepo.create(
       {
@@ -157,7 +186,7 @@ export async function createEntrada(productId: string, input: CreateEntradaInput
     action: "PRODUCT_STOCK_IN",
     entity: "Product",
     entityId: productId,
-    after: { quantity: input.quantity, unitCostCents },
+    after: { quantity: input.quantity, unitCostCents, totalCents },
   });
 
   return movement;
@@ -236,11 +265,6 @@ export async function createSaida(productId: string, input: CreateSaidaInput, us
   return movement;
 }
 
-// Exclusao de movimentacao - permitida neste modulo (diferente do de Pecas),
-// a pedido do usuario, protegendo a integridade do FIFO:
-//  - ENTRADA so pode ser excluida se o lote dela nunca foi consumido.
-//  - SAIDA sempre pode ser excluida, e devolve a quantidade exatamente aos
-//    lotes de onde ela tinha vindo.
 export async function deleteMovement(movementId: string, userId: string) {
   const movement = await movementsRepo.findById(movementId);
   if (!movement) throw AppError.notFound("Movimentacao nao encontrada");
@@ -257,7 +281,6 @@ export async function deleteMovement(movementId: string, userId: string) {
         where: { id: movement.productId },
         data: { quantity: { decrement: movement.quantity } },
       });
-      // O onDelete: Cascade do relacionamento apaga o lote junto.
       await movementsRepo.remove(movementId, tx);
     } else {
       for (const c of movement.consumptions) {
@@ -299,10 +322,6 @@ export async function listMovements(query: Record<string, unknown>) {
   return toPaginatedResult(items, total, pagination);
 }
 
-// ---------------------------------------------------------------------------
-// Relatorios (migrados do sistema antigo)
-// ---------------------------------------------------------------------------
-
 export async function getConsumptionReport(filters: { month?: string; setor?: string; funcionario?: string }) {
   const where: Prisma.ProductMovementWhereInput = { type: MovementType.RETIRADA };
   if (filters.setor) where.setor = { contains: filters.setor, mode: "insensitive" };
@@ -313,7 +332,7 @@ export async function getConsumptionReport(filters: { month?: string; setor?: st
     ? movements.filter((m) => m.createdAt.toISOString().slice(0, 7) === filters.month)
     : movements;
 
-  const groups = new Map<
+  const groups = new Map
     string,
     {
       month: string;
@@ -370,4 +389,28 @@ export async function getMonthlyBalance() {
   });
 
   return result.reverse();
+}
+
+export async function getProductOutputByMonth() {
+  const movements = await movementsRepo.allForReports({ type: MovementType.RETIRADA });
+
+  const byProduct = new Map<string, { productId: string; productName: string; months: Map<string, number> }>();
+
+  for (const m of movements) {
+    const month = m.createdAt.toISOString().slice(0, 7);
+    let entry = byProduct.get(m.productId);
+    if (!entry) {
+      entry = { productId: m.productId, productName: m.product.name, months: new Map() };
+      byProduct.set(m.productId, entry);
+    }
+    entry.months.set(month, (entry.months.get(month) ?? 0) + m.quantity);
+  }
+
+  return Array.from(byProduct.values()).map((entry) => ({
+    productId: entry.productId,
+    productName: entry.productName,
+    months: Array.from(entry.months.entries())
+      .map(([month, quantity]) => ({ month, quantity }))
+      .sort((a, b) => a.month.localeCompare(b.month)),
+  }));
 }
