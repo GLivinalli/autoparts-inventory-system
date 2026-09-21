@@ -332,7 +332,7 @@ export async function getConsumptionReport(filters: { month?: string; setor?: st
     ? movements.filter((m) => m.createdAt.toISOString().slice(0, 7) === filters.month)
     : movements;
 
-  const groups = new Map
+  const groups = new Map<
     string,
     {
       month: string;
