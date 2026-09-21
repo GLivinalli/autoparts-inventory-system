@@ -8,7 +8,7 @@ interface ProductMovementModalProps {
   product: Product;
   type: MovementType;
   onClose: () => void;
-  onSubmitEntrada: (quantity: number, unitCostReais: number, description?: string) => Promise<void>;
+  onSubmitEntrada: (quantity: number, totalValueReais: number, description?: string) => Promise<void>;
   onSubmitSaida: (
     quantity: number,
     setor: string,
@@ -26,7 +26,7 @@ export function ProductMovementModal({
   onSubmitSaida,
 }: ProductMovementModalProps) {
   const [quantity, setQuantity] = useState("1");
-  const [unitCostReais, setUnitCostReais] = useState("0,00");
+  const [totalValueReais, setTotalValueReais] = useState("0,00");
   const [setor, setSetor] = useState("");
   const [funcionario, setFuncionario] = useState("");
   const [description, setDescription] = useState("");
@@ -38,15 +38,15 @@ export function ProductMovementModal({
 
   const isEntrada = type === "ENTRADA";
   const parsedQuantity = Number(quantity);
-  const parsedCost = Number(unitCostReais.replace(",", "."));
+  const parsedValue = Number(totalValueReais.replace(",", "."));
   const projected = isEntrada ? product.quantity + parsedQuantity : product.quantity - parsedQuantity;
 
   function validate(): string | null {
     if (!Number.isInteger(parsedQuantity) || parsedQuantity <= 0) {
       return "Informe uma quantidade valida";
     }
-    if (isEntrada && (Number.isNaN(parsedCost) || parsedCost < 0)) {
-      return "Informe um valor unitario valido";
+    if (isEntrada && (Number.isNaN(parsedValue) || parsedValue < 0)) {
+      return "Informe um valor total valido";
     }
     if (!isEntrada) {
       if (!setor.trim()) return "Informe o setor";
@@ -67,13 +67,13 @@ export function ProductMovementModal({
     setSubmitting(true);
     try {
       if (isEntrada) {
-        await onSubmitEntrada(parsedQuantity, parsedCost, description.trim() || undefined);
+        await onSubmitEntrada(parsedQuantity, parsedValue, description.trim() || undefined);
       } else {
         await onSubmitSaida(parsedQuantity, setor.trim(), funcionario.trim(), description.trim() || undefined);
       }
       setConfirming(false);
       setQuantity("1");
-      setUnitCostReais("0,00");
+      setTotalValueReais("0,00");
       setSetor("");
       setFuncionario("");
       setDescription("");
@@ -115,14 +115,18 @@ export function ProductMovementModal({
 
           {isEntrada ? (
             <>
-              <label className="mb-1 block text-sm font-medium text-ink">Valor unitario (R$)</label>
+              <label className="mb-1 block text-sm font-medium text-ink">Valor total pago (R$)</label>
               <input
                 inputMode="decimal"
-                value={unitCostReais}
-                onChange={(e) => setUnitCostReais(e.target.value)}
+                value={totalValueReais}
+                onChange={(e) => setTotalValueReais(e.target.value)}
                 placeholder="0,00"
-                className="mb-3 h-11 w-full rounded border border-line px-3 text-sm focus:border-accent"
+                className="mb-1 h-11 w-full rounded border border-line px-3 text-sm focus:border-accent"
               />
+              <p className="mb-3 text-xs text-muted">
+                Valor total da compra dessas {parsedQuantity || 0} unidades - o custo por unidade e calculado
+                sozinho.
+              </p>
             </>
           ) : (
             <>
