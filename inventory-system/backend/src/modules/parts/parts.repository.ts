@@ -54,22 +54,11 @@ export function unarchive(id: string) {
 // para uso normal (o fluxo padrao e sempre arquivar, nunca excluir).
 export function remove(id: string) {
   return prisma.part.delete({ where: { id } });
+}
 
 export function dashboardCounts() {
   return prisma.$transaction([
     prisma.part.count({ where: { archivedAt: null } }),
     prisma.part.aggregate({ where: { archivedAt: null }, _sum: { quantity: true } }),
     prisma.part.count({ where: { archivedAt: null, quantity: 0 } }),
-    prisma.part.count({ where: { archivedAt: null, condition: "COM_DANO" } }),
-    prisma.part.count({ where: { archivedAt: null, condition: "SEM_DANO" } }),
-  ]);
-}
-
-export function recentlyAdded(take: number) {
-  return prisma.part.findMany({
-    where: { archivedAt: null },
-    include: detailInclude,
-    orderBy: { createdAt: "desc" },
-    take,
-  });
-}
+    prisma.part.count({ where: { archivedAt: null, condition:
