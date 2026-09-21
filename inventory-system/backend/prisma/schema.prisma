@@ -115,7 +115,7 @@ model Part {
   sku            String?       @unique
   manufacturerId String        @map("manufacturer_id")
   manufacturer   Manufacturer  @relation(fields: [manufacturerId], references: [id], onDelete: Restrict)
-  side           PartSide      @map("side")
+  side           PartSide?      @map("side")
   condition      PartCondition @default(SEM_DANO)
   damageNotes    String?       @map("damage_notes")
   // Quantidade atual. So pode ser alterada pelo movements.service dentro de
