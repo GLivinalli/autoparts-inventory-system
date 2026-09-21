@@ -1,6 +1,10 @@
 import { z } from "zod";
 import { MovementType } from "@prisma/client";
 
+// Cadastro de produto ja inclui o estoque inicial (quantidade + valor
+// TOTAL da compra, nao valor unitario - o usuario informa quanto pagou no
+// total e o sistema calcula o custo por unidade sozinho). Se
+// initialQuantity for 0, totalValueReais e ignorado.
 export const createProductSchema = z
   .object({
     name: z.string().trim().min(2, "Nome muito curto").max(150),
@@ -27,8 +31,11 @@ export const listProductsQuerySchema = z.object({
   page: z.coerce.number().optional(),
   pageSize: z.coerce.number().optional(),
   search: z.string().trim().optional(),
+  archived: z.coerce.boolean().optional(),
 });
 
+// Entrada tambem usa valor TOTAL, nao unitario - mesmo raciocinio do
+// cadastro inicial.
 export const createEntradaSchema = z.object({
   quantity: z.coerce.number().int().positive("Quantidade deve ser maior que zero"),
   totalValueReais: z.coerce.number().nonnegative("Valor nao pode ser negativo"),
