@@ -30,6 +30,8 @@ router.get("/:id", controller.getOne);
 
 router.post("/", requirePermission("canManageProducts"), validate(createProductSchema), controller.create);
 router.patch("/:id", requirePermission("canManageProducts"), validate(updateProductSchema), controller.update);
+router.post("/:id/archive", requirePermission("canManageProducts"), controller.archive);
+router.post("/:id/unarchive", requirePermission("canManageProducts"), controller.unarchive);
 
 router.post(
   "/:id/entrada",
