@@ -19,7 +19,7 @@ function reaisToCents(reais: number) {
 
 export async function listProducts(query: ListProductsQuery) {
   const pagination = parsePagination(query);
-  const where: Prisma.ProductWhereInput = {};
+  const where: Prisma.ProductWhereInput = { archivedAt: query.archived ? { not: null } : null };
   if (query.search) {
     where.OR = [
       { name: { contains: query.search, mode: "insensitive" } },
@@ -32,21 +32,24 @@ export async function listProducts(query: ListProductsQuery) {
     repo.count(where),
   ]);
 
-  const batches = await repo.oldestOpenBatchesFor(items.map((p) => p.id));
+  const batches = await repo.openBatchesFor(items.map((p) => p.id));
   const oldestByProduct = new Map<string, Date>();
+  const valueByProduct = new Map<string, number>();
   for (const b of batches) {
     if (!oldestByProduct.has(b.productId)) oldestByProduct.set(b.productId, b.createdAt);
+    valueByProduct.set(b.productId, (valueByProduct.get(b.productId) ?? 0) + b.quantityRemaining * b.unitCostCents);
   }
 
-  const withDays = items.map((p) => {
+  const withExtras = items.map((p) => {
     const oldest = oldestByProduct.get(p.id);
     return {
       ...p,
       daysInStock: oldest ? Math.floor((Date.now() - oldest.getTime()) / 86_400_000) : null,
+      stockValueCents: valueByProduct.get(p.id) ?? 0,
     };
   });
 
-  return toPaginatedResult(withDays, total, pagination);
+  return toPaginatedResult(withExtras, total, pagination);
 }
 
 export async function getProductDetail(id: string, historyPage: Record<string, unknown> = {}) {
@@ -67,10 +70,12 @@ export async function getProductDetail(id: string, historyPage: Record<string, u
 
   const daysInStock =
     openBatches.length > 0 ? Math.floor((Date.now() - openBatches[0].createdAt.getTime()) / 86_400_000) : null;
+  const stockValueCents = openBatches.reduce((sum, b) => sum + b.quantityRemaining * b.unitCostCents, 0);
 
   return {
     product,
     daysInStock,
+    stockValueCents,
     batches: openBatches,
     history: toPaginatedResult(movements, totalMovements, pagination),
   };
@@ -142,6 +147,21 @@ export async function updateProduct(id: string, input: UpdateProductInput, userI
     before: { name: before.name, manufacturer: before.manufacturer },
     after: { name: product.name, manufacturer: product.manufacturer },
   });
+  return product;
+}
+
+export async function archiveProduct(id: string, userId: string) {
+  const before = await repo.findById(id);
+  if (!before) throw AppError.notFound("Produto nao encontrado");
+  if (before.archivedAt) throw AppError.validation("Produto ja esta arquivado");
+  const product = await repo.archive(id);
+  await logAudit({ userId, action: "ARCHIVE_PRODUCT", entity: "Product", entityId: id });
+  return product;
+}
+
+export async function unarchiveProduct(id: string, userId: string) {
+  const product = await repo.unarchive(id);
+  await logAudit({ userId, action: "UNARCHIVE_PRODUCT", entity: "Product", entityId: id });
   return product;
 }
 
@@ -332,7 +352,7 @@ export async function getConsumptionReport(filters: { month?: string; setor?: st
     ? movements.filter((m) => m.createdAt.toISOString().slice(0, 7) === filters.month)
     : movements;
 
-  const groups = new Map<
+  const groups = new Map
     string,
     {
       month: string;
@@ -394,7 +414,10 @@ export async function getMonthlyBalance() {
 export async function getProductOutputByMonth() {
   const movements = await movementsRepo.allForReports({ type: MovementType.RETIRADA });
 
-  const byProduct = new Map<string, { productId: string; productName: string; months: Map<string, number> }>();
+  const byProduct = new Map<
+    string,
+    { productId: string; productName: string; months: Map<string, { quantity: number; totalCents: number }> }
+  >();
 
   for (const m of movements) {
     const month = m.createdAt.toISOString().slice(0, 7);
@@ -403,14 +426,17 @@ export async function getProductOutputByMonth() {
       entry = { productId: m.productId, productName: m.product.name, months: new Map() };
       byProduct.set(m.productId, entry);
     }
-    entry.months.set(month, (entry.months.get(month) ?? 0) + m.quantity);
+    const monthEntry = entry.months.get(month) ?? { quantity: 0, totalCents: 0 };
+    monthEntry.quantity += m.quantity;
+    monthEntry.totalCents += m.totalCents;
+    entry.months.set(month, monthEntry);
   }
 
   return Array.from(byProduct.values()).map((entry) => ({
     productId: entry.productId,
     productName: entry.productName,
     months: Array.from(entry.months.entries())
-      .map(([month, quantity]) => ({ month, quantity }))
+      .map(([month, v]) => ({ month, quantity: v.quantity, totalCents: v.totalCents }))
       .sort((a, b) => a.month.localeCompare(b.month)),
   }));
 }
