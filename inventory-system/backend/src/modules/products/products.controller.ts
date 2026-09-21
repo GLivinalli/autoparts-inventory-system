@@ -22,6 +22,16 @@ export const update = asyncHandler(async (req: Request, res: Response) => {
   res.json({ product });
 });
 
+export const archive = asyncHandler(async (req: Request, res: Response) => {
+  const product = await service.archiveProduct(req.params.id, req.user!.id);
+  res.json({ product });
+});
+
+export const unarchive = asyncHandler(async (req: Request, res: Response) => {
+  const product = await service.unarchiveProduct(req.params.id, req.user!.id);
+  res.json({ product });
+});
+
 export const createEntrada = asyncHandler(async (req: Request, res: Response) => {
   const movement = await service.createEntrada(req.params.id, req.body, req.user!.id);
   res.status(201).json({ movement });
