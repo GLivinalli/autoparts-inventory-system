@@ -8,7 +8,7 @@ export interface PartsFilters {
   manufacturerId?: string;
   condition?: string;
   stock?: "available" | "out";
-  includeArchived?: boolean;
+  archived?: boolean;
 }
 
 export async function listParts(filters: PartsFilters) {
