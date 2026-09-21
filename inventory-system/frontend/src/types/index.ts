@@ -23,6 +23,10 @@ export interface UserPermissions {
   canStockIn: boolean;
   canStockOut: boolean;
   canManageUsers: boolean;
+  canManageProducts: boolean;
+  canStockInProducts: boolean;
+  canStockOutProducts: boolean;
+  canDeleteProductMoves: boolean;
 }
 
 export interface User {
@@ -99,4 +103,61 @@ export interface DashboardSummary {
 
 export interface ApiErrorPayload {
   error: { code: string; message: string; details?: unknown };
+}
+
+// ---- Modulo de Produtos (almoxarifado com custeio FIFO) ----
+
+export interface Product {
+  id: string;
+  name: string;
+  manufacturer: string;
+  quantity: number;
+  daysInStock: number | null;
+  createdById: string;
+  createdBy: { id: string; name: string; email: string };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProductBatch {
+  id: string;
+  productId: string;
+  movementId: string;
+  quantityOriginal: number;
+  quantityRemaining: number;
+  unitCostCents: number;
+  createdAt: string;
+}
+
+export interface ProductMovement {
+  id: string;
+  productId: string;
+  product?: { id: string; name: string; manufacturer: string };
+  type: MovementType;
+  quantity: number;
+  unitCostCents: number | null;
+  totalCents: number;
+  setor: string | null;
+  funcionario: string | null;
+  description: string | null;
+  userId: string;
+  user: { id: string; name: string; email: string };
+  createdAt: string;
+}
+
+export interface ConsumptionReportRow {
+  month: string;
+  setor: string;
+  funcionario: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  totalCents: number;
+}
+
+export interface MonthlyBalanceRow {
+  month: string;
+  entradasCents: number;
+  saidasCents: number;
+  saldoCents: number;
 }
