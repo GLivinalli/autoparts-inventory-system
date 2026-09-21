@@ -52,5 +52,3 @@ export function MobileNav() {
     </nav>
   );
 }
-EOF
-echo done
