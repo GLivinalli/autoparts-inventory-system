@@ -1,5 +1,6 @@
 import type { Product } from "@/types";
 import { Badge } from "@/components/common/Badge";
+import { formatCentsToBRL } from "@/utils/labels";
 
 export function ProductCard({ product, onClick }: { product: Product; onClick: () => void }) {
   const outOfStock = product.quantity === 0;
@@ -13,11 +14,12 @@ export function ProductCard({ product, onClick }: { product: Product; onClick: (
       <div className="min-w-0 flex-1">
         <p className="truncate font-medium text-ink">{product.name}</p>
         <p className="truncate text-xs text-muted">{product.manufacturer}</p>
-        {product.daysInStock !== null && (
-          <div className="mt-1">
-            <Badge tone={product.daysInStock > 90 ? "danger" : "neutral"}>{product.daysInStock} dias em estoque</Badge>
-          </div>
-        )}
+        <div className="mt-1 flex flex-wrap items-center gap-1.5">
+          {product.daysInStock !== null && (
+            <Badge tone={product.daysInStock > 90 ? "danger" : "neutral"}>{product.daysInStock} dias</Badge>
+          )}
+          <span className="text-xs text-muted">{formatCentsToBRL(product.stockValueCents)}</span>
+        </div>
       </div>
 
       <div className="shrink-0 text-right">
