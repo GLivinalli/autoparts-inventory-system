@@ -5,10 +5,12 @@ import { getApiErrorMessage } from "@/api/client";
 export interface ProductFormValues {
   name: string;
   manufacturer: string;
+  initialQuantity: string;
+  totalValueReais: string;
 }
 
 function emptyForm(): ProductFormValues {
-  return { name: "", manufacturer: "" };
+  return { name: "", manufacturer: "", initialQuantity: "0", totalValueReais: "0,00" };
 }
 
 interface ProductFormProps {
@@ -27,7 +29,7 @@ export function ProductForm({ open, editingProduct, onClose, onSubmit }: Product
   useEffect(() => {
     if (!open) return;
     const initial: ProductFormValues = editingProduct
-      ? { name: editingProduct.name, manufacturer: editingProduct.manufacturer }
+      ? { name: editingProduct.name, manufacturer: editingProduct.manufacturer, initialQuantity: "0", totalValueReais: "0,00" }
       : emptyForm();
     setValues(initial);
     initialSnapshotRef.current = JSON.stringify(initial);
@@ -47,6 +49,13 @@ export function ProductForm({ open, editingProduct, onClose, onSubmit }: Product
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+
+    const quantity = Number(values.initialQuantity) || 0;
+    const value = Number(values.totalValueReais.replace(",", "."));
+    if (quantity > 0 && (Number.isNaN(value) || value < 0)) {
+      return setError("Informe um valor total valido");
+    }
+
     setSubmitting(true);
     try {
       await onSubmit(values);
@@ -96,6 +105,35 @@ export function ProductForm({ open, editingProduct, onClose, onSubmit }: Product
               className="h-11 w-full rounded border border-line px-3 text-sm focus:border-accent"
             />
           </div>
+
+          {!editingProduct && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="mb-1 block text-sm font-medium text-ink">Quantidade</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={values.initialQuantity}
+                  onChange={(e) => setValues((v) => ({ ...v, initialQuantity: e.target.value }))}
+                  className="h-11 w-full rounded border border-line px-3 text-sm focus:border-accent"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-ink">Valor total (R$)</label>
+                <input
+                  inputMode="decimal"
+                  value={values.totalValueReais}
+                  onChange={(e) => setValues((v) => ({ ...v, totalValueReais: e.target.value }))}
+                  placeholder="0,00"
+                  className="h-11 w-full rounded border border-line px-3 text-sm focus:border-accent"
+                />
+              </div>
+              <p className="col-span-2 text-xs text-muted">
+                Informe quanto voce pagou no total pela quantidade acima - o custo por unidade e calculado sozinho.
+                Se deixar quantidade em 0, o produto fica cadastrado sem estoque, e voce adiciona depois.
+              </p>
+            </div>
+          )}
 
           {error && <p className="text-sm text-danger">{error}</p>}
         </div>
