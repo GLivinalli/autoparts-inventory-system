@@ -12,16 +12,20 @@ export async function listParts(query: ListPartsQuery) {
   const pagination = parsePagination(query);
   const where: Prisma.PartWhereInput = { archivedAt: query.includeArchived ? undefined : null };
 
-  // A busca por texto cobre nome, SKU e montadora. Como a posicao da peca
-  // (dianteiro, direito, etc.) agora e digitada dentro do proprio nome,
-  // procurar por ela funciona naturalmente atraves desse mesmo campo, sem
-  // precisar de um filtro separado.
+  // Busca por palavras, nao por frase exata: cada palavra digitada precisa
+  // aparecer em algum lugar (nome, SKU ou montadora), mas a ORDEM nao
+  // importa. Ex.: procurar "farol esquerdo dianteiro" encontra uma peca
+  // cadastrada como "Farol dianteiro esquerdo", porque as tres palavras
+  // aparecem no nome, so que em ordem diferente.
   if (query.search) {
-    where.OR = [
-      { name: { contains: query.search, mode: "insensitive" } },
-      { sku: { contains: query.search, mode: "insensitive" } },
-      { manufacturer: { name: { contains: query.search, mode: "insensitive" } } },
-    ];
+    const words = query.search.trim().split(/\s+/).filter(Boolean);
+    where.AND = words.map((word) => ({
+      OR: [
+        { name: { contains: word, mode: "insensitive" as const } },
+        { sku: { contains: word, mode: "insensitive" as const } },
+        { manufacturer: { name: { contains: word, mode: "insensitive" as const } } },
+      ],
+    }));
   }
   if (query.manufacturerId) where.manufacturerId = query.manufacturerId;
   if (query.condition) where.condition = query.condition;
