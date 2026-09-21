@@ -10,6 +10,8 @@ import { CreatePartInput, ListPartsQuery, UpdatePartInput } from "./parts.valida
 
 export async function listParts(query: ListPartsQuery) {
   const pagination = parsePagination(query);
+  // Por padrao mostra so as ativas. Com "archived: true", mostra so as
+  // arquivadas - sao duas listas separadas, nunca misturadas.
   const where: Prisma.PartWhereInput = { archivedAt: query.archived ? { not: null } : null };
 
   // Busca por palavras, nao por frase exata: cada palavra digitada precisa
@@ -58,6 +60,10 @@ export async function getPartDetail(id: string, historyPage: Record<string, unkn
 }
 
 export async function createPart(input: CreatePartInput, userId: string) {
+  // SKU agora e opcional e de texto livre. Se nao for informado, fica NULL
+  // no banco (permitido varias vezes, ja que a restricao UNIQUE do Postgres
+  // nao considera NULL == NULL). So checamos duplicidade quando um SKU foi
+  // de fato digitado.
   const sku = input.sku ?? null;
 
   if (sku) {
@@ -73,6 +79,7 @@ export async function createPart(input: CreatePartInput, userId: string) {
         manufacturer: { connect: { id: input.manufacturerId } },
         condition: input.condition,
         damageNotes: input.condition === "COM_DANO" ? input.damageNotes : null,
+        // Foto do dano so faz sentido quando a peca esta marcada "Com dano".
         damagePhotoUrl: input.condition === "COM_DANO" ? input.damagePhotoUrl ?? null : null,
         quantity: 0,
         inventoryDate: input.inventoryDate,
@@ -82,6 +89,8 @@ export async function createPart(input: CreatePartInput, userId: string) {
       tx
     );
 
+    // Estoque inicial (se houver) tambem nasce como um movimento registrado,
+    // nunca como uma escrita direta em quantity (principio fundamental da spec).
     if (input.initialQuantity > 0) {
       await applyMovement(tx, {
         partId: created.id,
@@ -111,6 +120,9 @@ export async function updatePart(id: string, input: UpdatePartInput, userId: str
   if (!before) throw AppError.notFound("Peca nao encontrada");
   if (before.archivedAt) throw AppError.validation("Nao e possivel editar uma peca arquivada");
 
+  // Se um SKU novo foi informado e e diferente do atual, confere duplicidade
+  // antes de gravar (a constraint UNIQUE do banco tambem protege isso, mas
+  // aqui devolvemos uma mensagem amigavel em vez do erro generico).
   if (input.sku && input.sku !== before.sku) {
     const existing = await repo.findBySku(input.sku);
     if (existing && existing.id !== id) {
@@ -148,6 +160,8 @@ export async function archivePart(id: string, userId: string) {
   if (!before) throw AppError.notFound("Peca nao encontrada");
   if (before.archivedAt) throw AppError.validation("Peca ja esta arquivada");
 
+  // Nunca excluida de fato: arquivar preserva o historico de movimentacoes
+  // e a rastreabilidade (spec item 7).
   const part = await repo.archive(id);
 
   await logAudit({ userId, action: "ARCHIVE_PART", entity: "Part", entityId: id });
@@ -158,6 +172,29 @@ export async function unarchivePart(id: string, userId: string) {
   const part = await repo.unarchive(id);
   await logAudit({ userId, action: "UNARCHIVE_PART", entity: "Part", entityId: id });
   return part;
+}
+
+// Exclusao definitiva - so permitida para pecas ja arquivadas. Apaga junto
+// todo o historico de movimentacoes dela (o relacionamento no banco agora
+// usa Cascade so para este caso). Feita para limpar cadastros de teste; o
+// registro de auditoria da propria exclusao continua guardado, mesmo apos
+// a peca sumir do banco.
+export async function deletePart(id: string, userId: string) {
+  const before = await repo.findById(id);
+  if (!before) throw AppError.notFound("Peca nao encontrada");
+  if (!before.archivedAt) {
+    throw AppError.validation("So e possivel excluir pecas que ja estao arquivadas");
+  }
+
+  await logAudit({
+    userId,
+    action: "DELETE_PART",
+    entity: "Part",
+    entityId: id,
+    before: { name: before.name, sku: before.sku },
+  });
+
+  await repo.remove(id);
 }
 
 export async function getDashboardSummary() {
