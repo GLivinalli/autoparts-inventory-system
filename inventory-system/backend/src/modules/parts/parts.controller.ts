@@ -31,3 +31,8 @@ export const unarchive = asyncHandler(async (req: Request, res: Response) => {
   const part = await service.unarchivePart(req.params.id, req.user!.id);
   res.json({ part });
 });
+
+export const remove = asyncHandler(async (req: Request, res: Response) => {
+  await service.deletePart(req.params.id, req.user!.id);
+  res.status(204).send();
+});
