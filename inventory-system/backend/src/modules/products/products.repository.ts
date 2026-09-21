@@ -31,7 +31,15 @@ export function update(id: string, data: Prisma.ProductUpdateInput) {
   return prisma.product.update({ where: { id }, data, include: withCreatedBy });
 }
 
-export function oldestOpenBatchesFor(productIds: string[]) {
+export function archive(id: string) {
+  return prisma.product.update({ where: { id }, data: { archivedAt: new Date() }, include: withCreatedBy });
+}
+
+export function unarchive(id: string) {
+  return prisma.product.update({ where: { id }, data: { archivedAt: null }, include: withCreatedBy });
+}
+
+export function openBatchesFor(productIds: string[]) {
   if (productIds.length === 0) return Promise.resolve([]);
   return prisma.productBatch.findMany({
     where: { productId: { in: productIds }, quantityRemaining: { gt: 0 } },
