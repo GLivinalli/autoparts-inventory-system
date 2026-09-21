@@ -113,6 +113,8 @@ export interface Product {
   manufacturer: string;
   quantity: number;
   daysInStock: number | null;
+  stockValueCents: number;
+  archivedAt: string | null;
   createdById: string;
   createdBy: { id: string; name: string; email: string };
   createdAt: string;
@@ -165,5 +167,5 @@ export interface MonthlyBalanceRow {
 export interface ProductOutputByMonth {
   productId: string;
   productName: string;
-  months: { month: string; quantity: number }[];
+  months: { month: string; quantity: number; totalCents: number }[];
 }
