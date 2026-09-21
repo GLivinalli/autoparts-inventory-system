@@ -6,8 +6,9 @@ import { Pagination } from "@/components/common/Pagination";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { ImageLightbox } from "@/components/common/ImageLightbox";
 import { useAuth } from "@/context/AuthContext";
-import { getPart, archivePart, unarchivePart } from "@/api/parts";
+import { getPart, archivePart, unarchivePart, deletePart } from "@/api/parts";
 import { getApiErrorMessage } from "@/api/client";
+import { useToast } from "@/context/ToastContext";
 import { CONDITION_LABELS, formatDate, formatDateTime } from "@/utils/labels";
 
 interface PartDetailModalProps {
@@ -30,6 +31,7 @@ export function PartDetailModal({
   refreshKey,
 }: PartDetailModalProps) {
   const { can } = useAuth();
+  const { notify } = useToast();
   const [part, setPart] = useState<Part | null>(null);
   const [history, setHistory] = useState<Movement[]>([]);
   const [historyPage, setHistoryPage] = useState(1);
@@ -37,6 +39,8 @@ export function PartDetailModal({
   const [loading, setLoading] = useState(true);
   const [confirmingArchive, setConfirmingArchive] = useState(false);
   const [archiving, setArchiving] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
@@ -64,14 +68,28 @@ export function PartDetailModal({
       const updated = part.archivedAt ? await unarchivePart(part.id) : await archivePart(part.id);
       setPart(updated);
       setConfirmingArchive(false);
-      // Avisa a tela de tras para recarregar a lista - vale tanto para
-      // arquivar (some da lista ativa) quanto para reativar (some da lista
-      // de arquivadas).
       onArchived();
     } catch (err) {
       setError(getApiErrorMessage(err));
     } finally {
       setArchiving(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!part) return;
+    setDeleting(true);
+    try {
+      await deletePart(part.id);
+      notify("Peca excluida definitivamente", "success");
+      setConfirmingDelete(false);
+      onArchived();
+      onClose();
+    } catch (err) {
+      setError(getApiErrorMessage(err));
+      setConfirmingDelete(false);
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -215,13 +233,19 @@ export function PartDetailModal({
               </div>
             )}
             {part.archivedAt && can("canArchiveParts") && (
-              <div className="mt-4">
+              <div className="mt-4 flex flex-wrap gap-2">
                 <button
                   onClick={handleArchiveToggle}
                   disabled={archiving}
                   className="rounded border border-line px-4 py-2.5 text-sm font-medium text-ink hover:bg-surface"
                 >
                   Reativar peca
+                </button>
+                <button
+                  onClick={() => setConfirmingDelete(true)}
+                  className="rounded px-4 py-2.5 text-sm font-medium text-danger hover:bg-danger-soft"
+                >
+                  Excluir definitivamente
                 </button>
               </div>
             )}
@@ -268,6 +292,22 @@ export function PartDetailModal({
         confirmLabel="Arquivar"
         onConfirm={handleArchiveToggle}
         onCancel={() => setConfirmingArchive(false)}
+      />
+
+      <ConfirmDialog
+        open={confirmingDelete}
+        title="Excluir definitivamente"
+        tone="danger"
+        loading={deleting}
+        description={
+          <>
+            Isso apaga <strong>{part?.name}</strong> e todo o historico de movimentacoes dela para sempre. Nao
+            tem como desfazer. Use isso so para pecas cadastradas por engano ou para teste.
+          </>
+        }
+        confirmLabel="Excluir para sempre"
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmingDelete(false)}
       />
 
       {lightboxSrc && (
