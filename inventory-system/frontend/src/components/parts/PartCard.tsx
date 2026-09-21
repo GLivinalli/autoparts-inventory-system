@@ -28,6 +28,7 @@ export function PartCard({ part, onClick }: { part: Part; onClick: () => void })
         <div className="mt-1 flex flex-wrap items-center gap-1.5">
           <Badge tone="steel">{part.manufacturer.name}</Badge>
           {part.condition === "COM_DANO" && <Badge tone="danger">Com dano</Badge>}
+          {part.archivedAt && <Badge tone="neutral">Arquivada</Badge>}
         </div>
       </div>
 
