@@ -28,6 +28,7 @@ export function PartsList() {
   const debouncedSearch = useDebounce(search);
   const [filters, setFilters] = useState<FilterValues>(EMPTY_FILTERS);
   const [page, setPage] = useState(1);
+  const [viewArchived, setViewArchived] = useState(false);
 
   const [parts, setParts] = useState<Part[]>([]);
   const [totalPages, setTotalPages] = useState(1);
@@ -50,7 +51,7 @@ export function PartsList() {
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, filters]);
+  }, [debouncedSearch, filters, viewArchived]);
 
   useEffect(() => {
     let active = true;
@@ -63,6 +64,7 @@ export function PartsList() {
         manufacturerId: filters.manufacturerId || undefined,
         condition: (filters.condition || undefined) as never,
         stock: (filters.stock || undefined) as never,
+        archived: viewArchived || undefined,
       })
       .then((data) => {
         if (!active) return;
@@ -74,10 +76,9 @@ export function PartsList() {
     return () => {
       active = false;
     };
-  }, [page, debouncedSearch, filters]);
+  }, [page, debouncedSearch, filters, viewArchived]);
 
   function refreshList() {
-    setPage((p) => p);
     setDetailRefreshKey((k) => k + 1);
     partsApi
       .listParts({
@@ -87,6 +88,7 @@ export function PartsList() {
         manufacturerId: filters.manufacturerId || undefined,
         condition: (filters.condition || undefined) as never,
         stock: (filters.stock || undefined) as never,
+        archived: viewArchived || undefined,
       })
       .then((data) => {
         setParts(data.items);
@@ -138,26 +140,56 @@ export function PartsList() {
     <div>
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h1 className="font-display text-3xl font-semibold text-ink">Pecas</h1>
-          <p className="text-sm text-muted">Consulte, cadastre e controle o estoque</p>
+          <h1 className="font-display text-3xl font-semibold text-ink">
+            {viewArchived ? "Pecas arquivadas" : "Pecas"}
+          </h1>
+          <p className="text-sm text-muted">
+            {viewArchived
+              ? "Pecas fora do inventario ativo - o historico de cada uma continua preservado"
+              : "Consulte, cadastre e controle o estoque"}
+          </p>
         </div>
-        {can("canCreateParts") && (
+        <div className="flex gap-2">
           <button
-            onClick={() => {
-              setEditingPart(null);
-              setFormOpen(true);
-            }}
-            className="hidden rounded bg-accent px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-dark sm:block"
+            onClick={() => setViewArchived((v) => !v)}
+            className="hidden rounded border border-line px-4 py-2.5 text-sm font-medium text-ink hover:bg-white sm:block"
           >
-            Cadastrar peca
+            {viewArchived ? "Ver ativas" : "Ver arquivadas"}
           </button>
-        )}
+          {!viewArchived && can("canCreateParts") && (
+            <button
+              onClick={() => {
+                setEditingPart(null);
+                setFormOpen(true);
+              }}
+              className="hidden rounded bg-accent px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-dark sm:block"
+            >
+              Cadastrar peca
+            </button>
+          )}
+        </div>
       </div>
 
-      <div className="mb-4 flex flex-col gap-3">
-        <SearchBar value={search} onChange={setSearch} />
-        <FilterBar manufacturers={manufacturers} values={filters} onChange={setFilters} />
+      <div className="mb-3 sm:hidden">
+        <button
+          onClick={() => setViewArchived((v) => !v)}
+          className="w-full rounded border border-line bg-white px-4 py-2.5 text-sm font-medium text-ink"
+        >
+          {viewArchived ? "Ver pecas ativas" : "Ver pecas arquivadas"}
+        </button>
       </div>
+
+      {!viewArchived && (
+        <div className="mb-4 flex flex-col gap-3">
+          <SearchBar value={search} onChange={setSearch} />
+          <FilterBar manufacturers={manufacturers} values={filters} onChange={setFilters} />
+        </div>
+      )}
+      {viewArchived && (
+        <div className="mb-4">
+          <SearchBar value={search} onChange={setSearch} />
+        </div>
+      )}
 
       {loading ? (
         <div className="flex justify-center py-16">
@@ -165,7 +197,9 @@ export function PartsList() {
         </div>
       ) : parts.length === 0 ? (
         <div className="rounded border border-dashed border-line bg-white py-16 text-center">
-          <p className="text-sm text-muted">Nenhuma peca encontrada com estes filtros.</p>
+          <p className="text-sm text-muted">
+            {viewArchived ? "Nenhuma peca arquivada." : "Nenhuma peca encontrada com estes filtros."}
+          </p>
         </div>
       ) : (
         <>
@@ -181,7 +215,7 @@ export function PartsList() {
         </>
       )}
 
-      {can("canCreateParts") && (
+      {!viewArchived && can("canCreateParts") && (
         <button
           onClick={() => {
             setEditingPart(null);
