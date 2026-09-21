@@ -74,7 +74,7 @@ export const listPartsQuerySchema = z.object({
   manufacturerId: z.string().uuid().optional(),
   condition: conditionEnum.optional(),
   stock: z.enum(["available", "out"]).optional(),
-  includeArchived: z.coerce.boolean().optional(),
+  archived: z.coerce.boolean().optional(),
 });
 
 export type CreatePartInput = z.infer<typeof createPartSchema>;
