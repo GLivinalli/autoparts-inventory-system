@@ -1,6 +1,5 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
-import type { Manufacturer, Part, PartCondition, PartSide } from "@/types";
-import { SIDE_LABELS } from "@/utils/labels";
+import type { Manufacturer, Part, PartCondition } from "@/types";
 import { PhotoUpload } from "./PhotoUpload";
 import * as manufacturersApi from "@/api/manufacturers";
 import { getApiErrorMessage } from "@/api/client";
@@ -9,7 +8,6 @@ export interface PartFormValues {
   name: string;
   sku: string;
   manufacturerId: string;
-  side: PartSide | "";
   condition: PartCondition;
   damageNotes: string;
   initialQuantity: string;
@@ -27,7 +25,6 @@ function emptyForm(): PartFormValues {
     name: "",
     sku: "",
     manufacturerId: "",
-    side: "",
     condition: "SEM_DANO",
     damageNotes: "",
     initialQuantity: "1",
@@ -68,7 +65,6 @@ export function PartForm({
           name: editingPart.name,
           sku: editingPart.sku ?? "",
           manufacturerId: editingPart.manufacturerId,
-          side: editingPart.side,
           condition: editingPart.condition,
           damageNotes: editingPart.damageNotes ?? "",
           initialQuantity: "1",
@@ -112,7 +108,6 @@ export function PartForm({
     setError(null);
 
     if (!values.manufacturerId) return setError("Selecione a montadora");
-    if (!values.side) return setError("Selecione o lado/parte");
     if (values.condition === "COM_DANO" && !values.damageNotes.trim()) {
       return setError("Descreva o dano da peca");
     }
@@ -156,21 +151,12 @@ export function PartForm({
               required
               value={values.name}
               onChange={(e) => setValues((v) => ({ ...v, name: e.target.value }))}
-              placeholder="Ex.: Farol dianteiro"
+              placeholder="Ex.: Farol dianteiro direito"
               className="h-11 w-full rounded border border-line px-3 text-sm focus:border-accent"
             />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium text-ink">
-              SKU <span className="font-normal text-muted">(opcional - qualquer codigo, ou deixe em branco)</span>
-            </label>
-            <input
-              value={values.sku}
-              onChange={(e) => setValues((v) => ({ ...v, sku: e.target.value }))}
-              placeholder="Ex.: 12345, PECA-A1, ou deixe vazio"
-              className="h-11 w-full rounded border border-line px-3 font-mono text-sm focus:border-accent"
-            />
+            <p className="mt-1 text-xs text-muted">
+              Inclua a posicao no nome (ex.: dianteiro, traseiro, esquerdo) para facilitar a busca depois.
+            </p>
           </div>
 
           <div>
@@ -207,20 +193,15 @@ export function PartForm({
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-ink">Lado/parte</label>
-            <select
-              required
-              value={values.side}
-              onChange={(e) => setValues((v) => ({ ...v, side: e.target.value as PartSide }))}
-              className="h-11 w-full rounded border border-line bg-white px-3 text-sm focus:border-accent"
-            >
-              <option value="">Selecione</option>
-              {Object.entries(SIDE_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
+            <label className="mb-1 block text-sm font-medium text-ink">
+              SKU <span className="font-normal text-muted">(opcional - qualquer codigo, ou deixe em branco)</span>
+            </label>
+            <input
+              value={values.sku}
+              onChange={(e) => setValues((v) => ({ ...v, sku: e.target.value }))}
+              placeholder="Ex.: 12345, PECA-A1, ou deixe vazio"
+              className="h-11 w-full rounded border border-line px-3 font-mono text-sm focus:border-accent"
+            />
           </div>
 
           <div>
