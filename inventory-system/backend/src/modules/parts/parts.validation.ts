@@ -1,8 +1,7 @@
 import { z } from "zod";
-import { PartCondition, PartSide } from "@prisma/client";
+import { PartCondition } from "@prisma/client";
 
 const conditionEnum = z.nativeEnum(PartCondition);
-const sideEnum = z.nativeEnum(PartSide);
 
 // SKU e texto livre agora: qualquer letra/numero/simbolo, sem formato
 // obrigatorio. Se vier vazio, vira undefined (o service salva como NULL).
@@ -27,22 +26,19 @@ const damageRefinement = <T extends { condition: PartCondition; damageNotes?: st
   }
 };
 
+// "Lado/parte" nao existe mais como campo separado: a posicao da peca
+// (dianteiro, direito, etc.) agora e digitada dentro do proprio nome, para
+// a busca livre por nome/SKU/montadora encontrar naturalmente.
 export const createPartSchema = z
   .object({
     name: z.string().trim().min(2, "Nome muito curto").max(150),
     sku: freeSkuSchema,
     manufacturerId: z.string().uuid("Selecione uma montadora"),
-    side: sideEnum,
     condition: conditionEnum.default(PartCondition.SEM_DANO),
     damageNotes: z.string().trim().max(500).optional(),
-    // Estoque inicial informado no cadastro. Nao grava direto em quantity:
-    // o service cria um InventoryMovement ENTRADA para chegar nesse valor,
-    // preservando a regra "toda mudanca de estoque gera historico".
     initialQuantity: z.coerce.number().int().min(0).max(1_000_000).default(1),
     inventoryDate: z.coerce.date({ errorMap: () => ({ message: "Data do inventario invalida" }) }),
     photoUrl: z.string().url().optional().nullable(),
-    // Foto especifica do dano, so faz sentido quando condition = COM_DANO
-    // (o service ignora esse valor se a peca estiver marcada 'Sem dano').
     damagePhotoUrl: z.string().url().optional().nullable(),
   })
   .superRefine(damageRefinement);
@@ -52,7 +48,6 @@ export const updatePartSchema = z
     name: z.string().trim().min(2).max(150).optional(),
     sku: freeSkuSchema,
     manufacturerId: z.string().uuid().optional(),
-    side: sideEnum.optional(),
     condition: conditionEnum.optional(),
     damageNotes: z.string().trim().max(500).optional().nullable(),
     inventoryDate: z.coerce.date().optional(),
@@ -61,7 +56,6 @@ export const updatePartSchema = z
   })
   .superRefine((data, ctx) => {
     if (data.condition === PartCondition.COM_DANO && data.damageNotes === undefined) {
-      // so exige se condition esta sendo trocada para COM_DANO nesta chamada
       return;
     }
     if (data.condition === PartCondition.COM_DANO && !data.damageNotes?.trim()) {
@@ -78,7 +72,6 @@ export const listPartsQuerySchema = z.object({
   pageSize: z.coerce.number().optional(),
   search: z.string().trim().optional(),
   manufacturerId: z.string().uuid().optional(),
-  side: sideEnum.optional(),
   condition: conditionEnum.optional(),
   stock: z.enum(["available", "out"]).optional(),
   includeArchived: z.coerce.boolean().optional(),
