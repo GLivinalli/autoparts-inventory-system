@@ -39,8 +39,8 @@ export function Login() {
     <div className="flex min-h-screen items-center justify-center bg-ink px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <p className="font-display text-4xl font-semibold text-white">AutoParts</p>
-          <p className="mt-1 text-sm text-white/60">Controle de inventário de peças automotivas</p>
+          <p className="font-display text-4xl font-semibold text-white">Auto Gama</p>
+          <p className="mt-1 text-sm text-white/60">Controle de inventário</p>
         </div>
 
         <form onSubmit={handleSubmit} className="rounded-md bg-white p-6 shadow-lg">
