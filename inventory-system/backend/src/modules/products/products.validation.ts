@@ -1,10 +1,22 @@
 import { z } from "zod";
 import { MovementType } from "@prisma/client";
 
-export const createProductSchema = z.object({
-  name: z.string().trim().min(2, "Nome muito curto").max(150),
-  manufacturer: z.string().trim().min(1, "Informe o fabricante").max(150),
-});
+export const createProductSchema = z
+  .object({
+    name: z.string().trim().min(2, "Nome muito curto").max(150),
+    manufacturer: z.string().trim().min(1, "Informe o fabricante").max(150),
+    initialQuantity: z.coerce.number().int().min(0).max(1_000_000).default(0),
+    totalValueReais: z.coerce.number().nonnegative("Valor nao pode ser negativo").optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.initialQuantity > 0 && data.totalValueReais === undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Informe o valor total pago",
+        path: ["totalValueReais"],
+      });
+    }
+  });
 
 export const updateProductSchema = z.object({
   name: z.string().trim().min(2).max(150).optional(),
@@ -19,7 +31,7 @@ export const listProductsQuerySchema = z.object({
 
 export const createEntradaSchema = z.object({
   quantity: z.coerce.number().int().positive("Quantidade deve ser maior que zero"),
-  unitCostReais: z.coerce.number().nonnegative("Valor nao pode ser negativo"),
+  totalValueReais: z.coerce.number().nonnegative("Valor nao pode ser negativo"),
   description: z.string().trim().max(300).optional(),
 });
 
