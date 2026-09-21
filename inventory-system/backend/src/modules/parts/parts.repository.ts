@@ -49,6 +49,12 @@ export function unarchive(id: string) {
   return prisma.part.update({ where: { id }, data: { archivedAt: null }, include: detailInclude });
 }
 
+// Exclusao definitiva. So deve ser chamada pelo service depois de confirmar
+// que a peca ja esta arquivada - existe para limpar cadastros de teste, nao
+// para uso normal (o fluxo padrao e sempre arquivar, nunca excluir).
+export function remove(id: string) {
+  return prisma.part.delete({ where: { id } });
+
 export function dashboardCounts() {
   return prisma.$transaction([
     prisma.part.count({ where: { archivedAt: null } }),
