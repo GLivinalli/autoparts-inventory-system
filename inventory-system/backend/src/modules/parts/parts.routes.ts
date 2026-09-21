@@ -21,6 +21,9 @@ router.post("/", requirePermission("canCreateParts"), validate(createPartSchema)
 router.patch("/:id", requirePermission("canEditParts"), validate(updatePartSchema), controller.update);
 router.post("/:id/archive", requirePermission("canArchiveParts"), controller.archive);
 router.post("/:id/unarchive", requirePermission("canArchiveParts"), controller.unarchive);
+// Exclusao definitiva: usa a mesma permissao de arquivar/reativar, e o
+// service (parts.service.ts) bloqueia se a peca nao estiver arquivada.
+router.delete("/:id", requirePermission("canArchiveParts"), controller.remove);
 
 // Movimentacoes de uma peca especifica: /parts/:partId/movements
 router.get(
