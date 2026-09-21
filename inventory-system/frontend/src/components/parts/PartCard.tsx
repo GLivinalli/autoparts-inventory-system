@@ -1,6 +1,5 @@
 import type { Part } from "@/types";
 import { Badge } from "@/components/common/Badge";
-import { SIDE_LABELS } from "@/utils/labels";
 
 export function PartCard({ part, onClick }: { part: Part; onClick: () => void }) {
   const outOfStock = part.quantity === 0;
@@ -28,7 +27,6 @@ export function PartCard({ part, onClick }: { part: Part; onClick: () => void })
         <p className="font-mono text-xs text-muted">{part.sku || "Sem SKU"}</p>
         <div className="mt-1 flex flex-wrap items-center gap-1.5">
           <Badge tone="steel">{part.manufacturer.name}</Badge>
-          <Badge tone="neutral">{SIDE_LABELS[part.side]}</Badge>
           {part.condition === "COM_DANO" && <Badge tone="danger">Com dano</Badge>}
         </div>
       </div>
