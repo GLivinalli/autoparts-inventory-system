@@ -6,7 +6,6 @@ export interface PartsFilters {
   pageSize?: number;
   search?: string;
   manufacturerId?: string;
-  side?: string;
   condition?: string;
   stock?: "available" | "out";
   includeArchived?: boolean;
@@ -27,7 +26,6 @@ export interface CreatePartPayload {
   name: string;
   sku?: string;
   manufacturerId: string;
-  side: string;
   condition: string;
   damageNotes?: string;
   damagePhotoUrl?: string | null;
