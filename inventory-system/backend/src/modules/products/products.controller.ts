@@ -53,3 +53,8 @@ export const monthlyBalance = asyncHandler(async (_req: Request, res: Response) 
   const items = await service.getMonthlyBalance();
   res.json({ items });
 });
+
+export const outputByMonth = asyncHandler(async (_req: Request, res: Response) => {
+  const items = await service.getProductOutputByMonth();
+  res.json({ items });
+});
