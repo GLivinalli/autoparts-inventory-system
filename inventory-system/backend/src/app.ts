@@ -1,6 +1,7 @@
 import express from "express";
 import helmet from "helmet";
 import cors from "cors";
+import compression from "compression";
 import cookieParser from "cookie-parser";
 import { env } from "@/config/env";
 import { apiLimiter } from "@/middleware/rateLimit";
@@ -20,6 +21,12 @@ export const app = express();
 // Headers de seguranca padrao (X-Content-Type-Options, HSTS, etc).
 app.use(helmet());
 
+// Comprime as respostas (gzip) antes de enviar: json das listagens e do
+// dashboard fica bem menor no ar, ajuda principalmente em conexao de dados
+// moveis. Nao comprime respostas ja pequenas (abaixo do threshold), para
+// nao gastar CPU a toa nelas.
+app.use(compression({ threshold: 1024 }));
+
 // So aceita requisicoes do frontend configurado, com cookies inclusos.
 const allowedOrigins = [
   env.FRONTEND_URL,
@@ -30,7 +37,6 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Sem "origin" (ex.: chamadas server-to-server, healthcheck) sempre libera.
       if (!origin || allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
