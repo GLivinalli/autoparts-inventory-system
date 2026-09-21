@@ -17,9 +17,12 @@ const router = Router();
 
 router.use(requireAuth);
 
+// Rotas fixas (/movements, /reports/...) tem que vir ANTES de "/:id", senao
+// o Express tentaria tratar "movements" como um ID.
 router.get("/movements", validate(listProductMovementsQuerySchema, "query"), controller.listMovements);
 router.get("/reports/consumption", validate(consumptionReportQuerySchema, "query"), controller.consumptionReport);
 router.get("/reports/monthly-balance", controller.monthlyBalance);
+router.get("/reports/output-by-month", controller.outputByMonth);
 router.delete("/movements/:movementId", requirePermission("canDeleteProductMoves"), controller.deleteMovement);
 
 router.get("/", validate(listProductsQuerySchema, "query"), controller.list);
