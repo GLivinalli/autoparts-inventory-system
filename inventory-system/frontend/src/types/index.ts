@@ -49,7 +49,7 @@ export interface Part {
   sku: string | null;
   manufacturerId: string;
   manufacturer: Manufacturer;
-  side: PartSide;
+  side: PartSide | null;
   condition: PartCondition;
   damageNotes: string | null;
   quantity: number;
