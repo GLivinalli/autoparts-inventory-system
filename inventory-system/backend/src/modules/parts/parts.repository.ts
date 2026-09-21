@@ -61,4 +61,16 @@ export function dashboardCounts() {
     prisma.part.count({ where: { archivedAt: null } }),
     prisma.part.aggregate({ where: { archivedAt: null }, _sum: { quantity: true } }),
     prisma.part.count({ where: { archivedAt: null, quantity: 0 } }),
-    prisma.part.count({ where: { archivedAt: null, condition:
+    prisma.part.count({ where: { archivedAt: null, condition: "COM_DANO" } }),
+    prisma.part.count({ where: { archivedAt: null, condition: "SEM_DANO" } }),
+  ]);
+}
+
+export function recentlyAdded(take: number) {
+  return prisma.part.findMany({
+    where: { archivedAt: null },
+    include: detailInclude,
+    orderBy: { createdAt: "desc" },
+    take,
+  });
+}
