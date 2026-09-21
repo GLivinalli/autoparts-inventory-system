@@ -8,6 +8,8 @@ import { Dashboard } from "@/pages/Dashboard";
 import { PartsList } from "@/pages/PartsList";
 import { History } from "@/pages/History";
 import { Users } from "@/pages/Users";
+import { ProductsList } from "@/pages/ProductsList";
+import { ProductReports } from "@/pages/ProductReports";
 import { ChangePassword } from "@/pages/ChangePassword";
 
 export function App() {
@@ -20,10 +22,12 @@ export function App() {
 
             <Route element={<ProtectedRoute />}>
               <Route element={<Layout />}>
-                <Route path="/trocar-senha" element={<ChangePassword />} />
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/pecas" element={<PartsList />} />
                 <Route path="/historico" element={<History />} />
+                <Route path="/produtos" element={<ProductsList />} />
+                <Route path="/produtos/relatorios" element={<ProductReports />} />
+                <Route path="/trocar-senha" element={<ChangePassword />} />
 
                 <Route element={<AdminRoute />}>
                   <Route path="/usuarios" element={<Users />} />
