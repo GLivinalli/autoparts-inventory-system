@@ -6,6 +6,7 @@ import cookieParser from "cookie-parser";
 import { env } from "@/config/env";
 import { apiLimiter } from "@/middleware/rateLimit";
 import { errorHandler } from "@/middleware/errorHandler";
+import productsRoutes from "@/modules/products/products.routes";
 
 import authRoutes from "@/modules/auth/auth.routes";
 import usersRoutes from "@/modules/users/users.routes";
@@ -61,6 +62,7 @@ app.use("/movements", movementsRoutes);
 app.use("/dashboard", dashboardRoutes);
 app.use("/uploads", uploadRoutes);
 app.use("/audit", auditRoutes);
+app.use("/products", productsRoutes);
 
 app.use((_req, res) => {
   res.status(404).json({ error: { code: "NOT_FOUND", message: "Rota nao encontrada" } });
