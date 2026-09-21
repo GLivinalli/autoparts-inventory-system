@@ -141,7 +141,7 @@ model Part {
 model InventoryMovement {
   id              String       @id @default(uuid())
   partId          String       @map("part_id")
-  part            Part         @relation(fields: [partId], references: [id], onDelete: Restrict)
+  part            Part         @relation(fields: [partId], references: [id], onDelete: Cascade)
   type            MovementType
   quantity        Int
   quantityBefore  Int          @map("quantity_before")
