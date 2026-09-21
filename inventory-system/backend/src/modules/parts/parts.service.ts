@@ -12,6 +12,10 @@ export async function listParts(query: ListPartsQuery) {
   const pagination = parsePagination(query);
   const where: Prisma.PartWhereInput = { archivedAt: query.includeArchived ? undefined : null };
 
+  // A busca por texto cobre nome, SKU e montadora. Como a posicao da peca
+  // (dianteiro, direito, etc.) agora e digitada dentro do proprio nome,
+  // procurar por ela funciona naturalmente atraves desse mesmo campo, sem
+  // precisar de um filtro separado.
   if (query.search) {
     where.OR = [
       { name: { contains: query.search, mode: "insensitive" } },
@@ -20,7 +24,6 @@ export async function listParts(query: ListPartsQuery) {
     ];
   }
   if (query.manufacturerId) where.manufacturerId = query.manufacturerId;
-  if (query.side) where.side = query.side;
   if (query.condition) where.condition = query.condition;
   if (query.stock === "available") where.quantity = { gt: 0 };
   if (query.stock === "out") where.quantity = 0;
@@ -51,10 +54,6 @@ export async function getPartDetail(id: string, historyPage: Record<string, unkn
 }
 
 export async function createPart(input: CreatePartInput, userId: string) {
-  // SKU agora e opcional e de texto livre. Se nao for informado, fica NULL
-  // no banco (permitido varias vezes, ja que a restricao UNIQUE do Postgres
-  // nao considera NULL == NULL). So checamos duplicidade quando um SKU foi
-  // de fato digitado.
   const sku = input.sku ?? null;
 
   if (sku) {
@@ -68,10 +67,8 @@ export async function createPart(input: CreatePartInput, userId: string) {
         name: input.name,
         sku,
         manufacturer: { connect: { id: input.manufacturerId } },
-        side: input.side,
         condition: input.condition,
         damageNotes: input.condition === "COM_DANO" ? input.damageNotes : null,
-        // Foto do dano so faz sentido quando a peca esta marcada "Com dano".
         damagePhotoUrl: input.condition === "COM_DANO" ? input.damagePhotoUrl ?? null : null,
         quantity: 0,
         inventoryDate: input.inventoryDate,
@@ -81,8 +78,6 @@ export async function createPart(input: CreatePartInput, userId: string) {
       tx
     );
 
-    // Estoque inicial (se houver) tambem nasce como um movimento registrado,
-    // nunca como uma escrita direta em quantity (principio fundamental da spec).
     if (input.initialQuantity > 0) {
       await applyMovement(tx, {
         partId: created.id,
@@ -112,9 +107,6 @@ export async function updatePart(id: string, input: UpdatePartInput, userId: str
   if (!before) throw AppError.notFound("Peca nao encontrada");
   if (before.archivedAt) throw AppError.validation("Nao e possivel editar uma peca arquivada");
 
-  // Se um SKU novo foi informado e e diferente do atual, confere duplicidade
-  // antes de gravar (a constraint UNIQUE do banco tambem protege isso, mas
-  // aqui devolvemos uma mensagem amigavel em vez do erro generico).
   if (input.sku && input.sku !== before.sku) {
     const existing = await repo.findBySku(input.sku);
     if (existing && existing.id !== id) {
@@ -127,7 +119,6 @@ export async function updatePart(id: string, input: UpdatePartInput, userId: str
     name: input.name,
     sku: input.sku,
     manufacturer: input.manufacturerId ? { connect: { id: input.manufacturerId } } : undefined,
-    side: input.side,
     condition: input.condition,
     damageNotes: nextCondition === "COM_DANO" ? input.damageNotes ?? before.damageNotes : null,
     damagePhotoUrl:
@@ -141,8 +132,8 @@ export async function updatePart(id: string, input: UpdatePartInput, userId: str
     action: "UPDATE_PART",
     entity: "Part",
     entityId: id,
-    before: { name: before.name, condition: before.condition, side: before.side },
-    after: { name: part.name, condition: part.condition, side: part.side },
+    before: { name: before.name, condition: before.condition },
+    after: { name: part.name, condition: part.condition },
   });
 
   return part;
@@ -153,8 +144,6 @@ export async function archivePart(id: string, userId: string) {
   if (!before) throw AppError.notFound("Peca nao encontrada");
   if (before.archivedAt) throw AppError.validation("Peca ja esta arquivada");
 
-  // Nunca excluida de fato: arquivar preserva o historico de movimentacoes
-  // e a rastreabilidade (spec item 7).
   const part = await repo.archive(id);
 
   await logAudit({ userId, action: "ARCHIVE_PART", entity: "Part", entityId: id });
