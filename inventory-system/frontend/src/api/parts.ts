@@ -62,6 +62,14 @@ export async function unarchivePart(id: string) {
   return data.part;
 }
 
+// Exclusao definitiva - so funciona no backend se a peca ja estiver
+// arquivada. Usada para limpar cadastros de teste.
+export async function deletePart(id: string) {
+  await api.delete(`/parts/${id}`);
+  invalidateCache("/parts");
+  invalidateCache("/dashboard");
+}
+
 export async function uploadPartPhoto(file: File) {
   const form = new FormData();
   form.append("photo", file);
