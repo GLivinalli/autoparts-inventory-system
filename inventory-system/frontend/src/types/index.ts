@@ -161,3 +161,9 @@ export interface MonthlyBalanceRow {
   saidasCents: number;
   saldoCents: number;
 }
+
+export interface ProductOutputByMonth {
+  productId: string;
+  productName: string;
+  months: { month: string; quantity: number }[];
+}
