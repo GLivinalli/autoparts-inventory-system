@@ -1,16 +1,15 @@
 import type { Part } from "@/types";
 import { Badge } from "@/components/common/Badge";
-import { SIDE_LABELS, formatDate } from "@/utils/labels";
+import { formatDate } from "@/utils/labels";
 
 export function PartTable({ parts, onSelect }: { parts: Part[]; onSelect: (part: Part) => void }) {
   return (
     <table className="w-full border-separate border-spacing-0 text-sm">
       <thead>
         <tr className="text-left text-xs uppercase tracking-wide text-muted">
-          <th className="border-b border-line py-2.5 pl-1 font-medium">Peca</th>
+          <th className="border-b border-line py-2.5 pl-1 font-medium">Peça</th>
           <th className="border-b border-line py-2.5 font-medium">SKU</th>
           <th className="border-b border-line py-2.5 font-medium">Montadora</th>
-          <th className="border-b border-line py-2.5 font-medium">Lado/parte</th>
           <th className="border-b border-line py-2.5 font-medium">Estado</th>
           <th className="border-b border-line py-2.5 font-medium">Inventario</th>
           <th className="border-b border-line py-2.5 pr-1 text-right font-medium">Estoque</th>
@@ -33,7 +32,6 @@ export function PartTable({ parts, onSelect }: { parts: Part[]; onSelect: (part:
             </td>
             <td className="border-b border-line py-2.5 font-mono text-xs text-muted">{part.sku || "Sem SKU"}</td>
             <td className="border-b border-line py-2.5 text-ink-soft">{part.manufacturer.name}</td>
-            <td className="border-b border-line py-2.5 text-ink-soft">{SIDE_LABELS[part.side]}</td>
             <td className="border-b border-line py-2.5">
               {part.condition === "COM_DANO" ? <Badge tone="danger">Com dano</Badge> : <Badge tone="success">Sem dano</Badge>}
             </td>
