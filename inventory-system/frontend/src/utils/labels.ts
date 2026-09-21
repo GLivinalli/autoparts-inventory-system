@@ -33,3 +33,9 @@ export function formatDateTime(value: string): string {
   const d = new Date(value);
   return d.toLocaleString("pt-BR");
 }
+
+// Modulo de Produtos guarda tudo em centavos (Int) - essa funcao e o unico
+// lugar que converte para o formato de moeda exibido na tela.
+export function formatCentsToBRL(cents: number): string {
+  return (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
