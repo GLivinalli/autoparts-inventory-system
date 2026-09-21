@@ -10,7 +10,7 @@ import { CreatePartInput, ListPartsQuery, UpdatePartInput } from "./parts.valida
 
 export async function listParts(query: ListPartsQuery) {
   const pagination = parsePagination(query);
-  const where: Prisma.PartWhereInput = { archivedAt: query.includeArchived ? undefined : null };
+  const where: Prisma.PartWhereInput = { archivedAt: query.archived ? { not: null } : null };
 
   // Busca por palavras, nao por frase exata: cada palavra digitada precisa
   // aparecer em algum lugar (nome, SKU ou montadora), mas a ORDEM nao
