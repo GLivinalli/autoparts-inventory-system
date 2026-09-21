@@ -61,15 +61,13 @@ export function PartDetailModal({
     if (!part) return;
     setArchiving(true);
     try {
-      if (part.archivedAt) {
-        const updated = await unarchivePart(part.id);
-        setPart(updated);
-      } else {
-        const updated = await archivePart(part.id);
-        setPart(updated);
-        onArchived();
-      }
+      const updated = part.archivedAt ? await unarchivePart(part.id) : await archivePart(part.id);
+      setPart(updated);
       setConfirmingArchive(false);
+      // Avisa a tela de tras para recarregar a lista - vale tanto para
+      // arquivar (some da lista ativa) quanto para reativar (some da lista
+      // de arquivadas).
+      onArchived();
     } catch (err) {
       setError(getApiErrorMessage(err));
     } finally {
