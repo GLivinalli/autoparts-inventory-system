@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import type { MovementType, Product } from "@/types";
 import { SearchBar } from "@/components/common/SearchBar";
 import { Pagination } from "@/components/common/Pagination";
@@ -9,11 +9,16 @@ import { ProductCard } from "@/components/products/ProductCard";
 import { ProductForm, ProductFormValues } from "@/components/products/ProductForm";
 import { ProductDetailModal } from "@/components/products/ProductDetailModal";
 import { ProductMovementModal } from "@/components/products/ProductMovementModal";
+import { QuickWithdrawalModal } from "@/components/products/QuickWithdrawalModal";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { useDebounce } from "@/hooks/useDebounce";
 import * as productsApi from "@/api/products";
 import { getApiErrorMessage } from "@/api/client";
+
+const tabBase = "rounded px-3 py-2 text-sm font-medium";
+const tabActive = "bg-ink text-white";
+const tabInactive = "text-muted hover:bg-white";
 
 export function ProductsList() {
   const { can } = useAuth();
@@ -31,6 +36,7 @@ export function ProductsList() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [movementModal, setMovementModal] = useState<{ product: Product; type: MovementType } | null>(null);
+  const [quickWithdrawalOpen, setQuickWithdrawalOpen] = useState(false);
   const [detailRefreshKey, setDetailRefreshKey] = useState(0);
 
   useEffect(() => {
@@ -58,10 +64,17 @@ export function ProductsList() {
 
   async function handleCreateOrUpdate(values: ProductFormValues) {
     if (editingProduct) {
-      await productsApi.updateProduct(editingProduct.id, values);
+      await productsApi.updateProduct(editingProduct.id, { name: values.name, manufacturer: values.manufacturer });
       notify("Produto atualizado com sucesso", "success");
     } else {
-      await productsApi.createProduct(values);
+      const initialQuantity = Number(values.initialQuantity) || 0;
+      const totalValueReais = Number(values.totalValueReais.replace(",", "."));
+      await productsApi.createProduct({
+        name: values.name,
+        manufacturer: values.manufacturer,
+        initialQuantity,
+        totalValueReais: initialQuantity > 0 ? totalValueReais : undefined,
+      });
       notify("Produto cadastrado com sucesso", "success");
     }
     setFormOpen(false);
@@ -69,9 +82,9 @@ export function ProductsList() {
     refreshList();
   }
 
-  async function handleEntradaSubmit(quantity: number, unitCostReais: number, description?: string) {
+  async function handleEntradaSubmit(quantity: number, totalValueReais: number, description?: string) {
     if (!movementModal) return;
-    await productsApi.createEntrada(movementModal.product.id, quantity, unitCostReais, description);
+    await productsApi.createEntrada(movementModal.product.id, quantity, totalValueReais, description);
     notify("Entrada registrada", "success");
     setMovementModal(null);
     refreshList();
@@ -85,20 +98,44 @@ export function ProductsList() {
     refreshList();
   }
 
+  async function handleQuickWithdrawal(
+    productId: string,
+    quantity: number,
+    setor: string,
+    funcionario: string,
+    description?: string
+  ) {
+    await productsApi.createSaida(productId, quantity, setor, funcionario, description);
+    notify("Saida registrada", "success");
+    setQuickWithdrawalOpen(false);
+    refreshList();
+  }
+
   return (
     <div>
+      <div className="mb-4 flex gap-1">
+        <NavLink to="/produtos" end className={({ isActive }) => `${tabBase} ${isActive ? tabActive : tabInactive}`}>
+          Estoque
+        </NavLink>
+        <NavLink to="/produtos/relatorios" className={({ isActive }) => `${tabBase} ${isActive ? tabActive : tabInactive}`}>
+          Relatorios
+        </NavLink>
+      </div>
+
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <div>
           <h1 className="font-display text-3xl font-semibold text-ink">Produtos</h1>
           <p className="text-sm text-muted">Almoxarifado com custeio FIFO por lote</p>
         </div>
-        <div className="flex gap-2">
-          <Link
-            to="/produtos/relatorios"
-            className="rounded border border-line px-4 py-2.5 text-sm font-medium text-ink hover:bg-white"
-          >
-            Relatorios
-          </Link>
+        <div className="flex flex-wrap gap-2">
+          {can("canStockOutProducts") && (
+            <button
+              onClick={() => setQuickWithdrawalOpen(true)}
+              className="rounded border border-danger/30 bg-danger-soft px-4 py-2.5 text-sm font-semibold text-danger hover:bg-danger-soft/80"
+            >
+              Retirada
+            </button>
+          )}
           {can("canManageProducts") && (
             <button
               onClick={() => {
@@ -190,6 +227,12 @@ export function ProductsList() {
           onSubmitSaida={handleSaidaSubmit}
         />
       )}
+
+      <QuickWithdrawalModal
+        open={quickWithdrawalOpen}
+        onClose={() => setQuickWithdrawalOpen(false)}
+        onSubmit={handleQuickWithdrawal}
+      />
     </div>
   );
 }
