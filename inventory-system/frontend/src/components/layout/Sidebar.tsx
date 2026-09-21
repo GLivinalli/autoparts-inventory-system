@@ -41,6 +41,14 @@ function IconUsers() {
     </svg>
   );
 }
+function IconBox() {
+  return (
+    <svg className={NAV_ICON_CLASS} width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+      <path d="m3.3 7 8.7 5 8.7-5M12 22V12" />
+    </svg>
+  );
+}
 
 const linkBase =
   "flex items-center gap-3 rounded px-3 py-2.5 text-sm font-medium transition-colors";
@@ -53,8 +61,8 @@ export function Sidebar() {
   return (
     <aside className="hidden w-60 shrink-0 flex-col bg-ink px-3 py-5 lg:flex">
       <div className="mb-8 px-2">
-        <p className="font-display text-2xl font-semibold leading-none text-white">Auto Gama</p>
-        <p className="mt-1 text-xs uppercase tracking-wide text-white/50">Controle de Inventário.</p>
+        <p className="font-display text-2xl font-semibold leading-none text-white">AutoParts</p>
+        <p className="mt-1 text-xs uppercase tracking-wide text-white/50">Controle de inventario</p>
       </div>
 
       <nav className="flex flex-1 flex-col gap-1">
@@ -62,15 +70,22 @@ export function Sidebar() {
           <IconDashboard /> Dashboard
         </NavLink>
         <NavLink to="/pecas" className={({ isActive }) => `${linkBase} ${isActive ? linkActive : linkInactive}`}>
-          <IconParts /> Inventário
+          <IconParts /> Pecas
         </NavLink>
         <NavLink to="/historico" className={({ isActive }) => `${linkBase} ${isActive ? linkActive : linkInactive}`}>
-          <IconHistory /> Histórico
+          <IconHistory /> Historico
+        </NavLink>
+        <div className="my-2 border-t border-white/10" />
+        <NavLink to="/produtos" className={({ isActive }) => `${linkBase} ${isActive ? linkActive : linkInactive}`}>
+          <IconBox /> Produtos
         </NavLink>
         {isAdmin && (
-          <NavLink to="/usuarios" className={({ isActive }) => `${linkBase} ${isActive ? linkActive : linkInactive}`}>
-            <IconUsers /> Usuários
-          </NavLink>
+          <>
+            <div className="my-2 border-t border-white/10" />
+            <NavLink to="/usuarios" className={({ isActive }) => `${linkBase} ${isActive ? linkActive : linkInactive}`}>
+              <IconUsers /> Usuarios
+            </NavLink>
+          </>
         )}
       </nav>
 
