@@ -1,9 +1,8 @@
 import type { Manufacturer } from "@/types";
-import { CONDITION_LABELS, SIDE_LABELS } from "@/utils/labels";
+import { CONDITION_LABELS } from "@/utils/labels";
 
 export interface FilterValues {
   manufacturerId: string;
-  side: string;
   condition: string;
   stock: string;
 }
@@ -44,15 +43,6 @@ export function FilterBar({ manufacturers, values, onChange }: FilterBarProps) {
         ))}
       </select>
 
-      <select className={selectClass} value={values.side} onChange={(e) => set("side", e.target.value)}>
-        <option value="">Lado/parte</option>
-        {Object.entries(SIDE_LABELS).map(([value, label]) => (
-          <option key={value} value={value}>
-            {label}
-          </option>
-        ))}
-      </select>
-
       <select className={selectClass} value={values.stock} onChange={(e) => set("stock", e.target.value)}>
         <option value="">Estoque</option>
         <option value="available">Disponivel</option>
@@ -62,7 +52,7 @@ export function FilterBar({ manufacturers, values, onChange }: FilterBarProps) {
       {hasActiveFilters && (
         <button
           type="button"
-          onClick={() => onChange({ manufacturerId: "", side: "", condition: "", stock: "" })}
+          onClick={() => onChange({ manufacturerId: "", condition: "", stock: "" })}
           className="h-10 rounded px-3 text-sm font-medium text-steel hover:bg-steel-soft"
         >
           Limpar filtros
