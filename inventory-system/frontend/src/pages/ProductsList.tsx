@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
-import type { MovementType, Product } from "@/types";
+import type { Product } from "@/types";
 import { SearchBar } from "@/components/common/SearchBar";
 import { Pagination } from "@/components/common/Pagination";
 import { Spinner } from "@/components/common/Spinner";
@@ -8,7 +8,6 @@ import { ProductTable } from "@/components/products/ProductTable";
 import { ProductCard } from "@/components/products/ProductCard";
 import { ProductForm, ProductFormValues } from "@/components/products/ProductForm";
 import { ProductDetailModal } from "@/components/products/ProductDetailModal";
-import { ProductMovementModal } from "@/components/products/ProductMovementModal";
 import { QuickWithdrawalModal } from "@/components/products/QuickWithdrawalModal";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
@@ -16,9 +15,9 @@ import { useDebounce } from "@/hooks/useDebounce";
 import * as productsApi from "@/api/products";
 import { getApiErrorMessage } from "@/api/client";
 
-const tabBase = "rounded px-3 py-2 text-sm font-medium";
-const tabActive = "bg-ink text-white";
-const tabInactive = "text-muted hover:bg-white";
+const actionButtonClass =
+  "rounded border border-line bg-white px-4 py-2.5 text-sm font-medium text-ink hover:bg-surface";
+const activeTabClass = "rounded bg-ink px-4 py-2.5 text-sm font-medium text-white";
 
 export function ProductsList() {
   const { can } = useAuth();
@@ -27,6 +26,7 @@ export function ProductsList() {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search);
   const [page, setPage] = useState(1);
+  const [viewArchived, setViewArchived] = useState(false);
 
   const [products, setProducts] = useState<Product[]>([]);
   const [totalPages, setTotalPages] = useState(1);
@@ -35,18 +35,17 @@ export function ProductsList() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
-  const [movementModal, setMovementModal] = useState<{ product: Product; type: MovementType } | null>(null);
   const [quickWithdrawalOpen, setQuickWithdrawalOpen] = useState(false);
   const [detailRefreshKey, setDetailRefreshKey] = useState(0);
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch]);
+  }, [debouncedSearch, viewArchived]);
 
   function fetchProducts() {
     setLoading(true);
     productsApi
-      .listProducts({ page, pageSize: 20, search: debouncedSearch || undefined })
+      .listProducts({ page, pageSize: 20, search: debouncedSearch || undefined, archived: viewArchived || undefined })
       .then((data) => {
         setProducts(data.items);
         setTotalPages(data.totalPages);
@@ -55,7 +54,7 @@ export function ProductsList() {
       .finally(() => setLoading(false));
   }
 
-  useEffect(fetchProducts, [page, debouncedSearch]);
+  useEffect(fetchProducts, [page, debouncedSearch, viewArchived]);
 
   function refreshList() {
     setDetailRefreshKey((k) => k + 1);
@@ -82,22 +81,6 @@ export function ProductsList() {
     refreshList();
   }
 
-  async function handleEntradaSubmit(quantity: number, totalValueReais: number, description?: string) {
-    if (!movementModal) return;
-    await productsApi.createEntrada(movementModal.product.id, quantity, totalValueReais, description);
-    notify("Entrada registrada", "success");
-    setMovementModal(null);
-    refreshList();
-  }
-
-  async function handleSaidaSubmit(quantity: number, setor: string, funcionario: string, description?: string) {
-    if (!movementModal) return;
-    await productsApi.createSaida(movementModal.product.id, quantity, setor, funcionario, description);
-    notify("Saida registrada", "success");
-    setMovementModal(null);
-    refreshList();
-  }
-
   async function handleQuickWithdrawal(
     productId: string,
     quantity: number,
@@ -113,44 +96,46 @@ export function ProductsList() {
 
   return (
     <div>
-      <div className="mb-4 flex gap-1">
-        <NavLink to="/produtos" end className={({ isActive }) => `${tabBase} ${isActive ? tabActive : tabInactive}`}>
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <NavLink to="/produtos" end className={({ isActive }) => (isActive ? activeTabClass : actionButtonClass)}>
           Estoque
         </NavLink>
-        <NavLink to="/produtos/relatorios" className={({ isActive }) => `${tabBase} ${isActive ? tabActive : tabInactive}`}>
+        <NavLink to="/produtos/relatorios" className={({ isActive }) => (isActive ? activeTabClass : actionButtonClass)}>
           Relatorios
         </NavLink>
+        {can("canStockOutProducts") && (
+          <button onClick={() => setQuickWithdrawalOpen(true)} className={actionButtonClass}>
+            Retirada
+          </button>
+        )}
+        {can("canManageProducts") && (
+          <button
+            onClick={() => {
+              setEditingProduct(null);
+              setFormOpen(true);
+            }}
+            className={actionButtonClass}
+          >
+            Cadastrar produto
+          </button>
+        )}
       </div>
 
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+      <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="font-display text-3xl font-semibold text-ink">Produtos</h1>
+          <h1 className="font-display text-3xl font-semibold text-ink">{viewArchived ? "Produtos arquivados" : "Produtos"}</h1>
           <p className="text-sm text-muted">Almoxarifado com custeio FIFO por lote</p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {can("canStockOutProducts") && (
-            <button
-              onClick={() => setQuickWithdrawalOpen(true)}
-              className="rounded border border-danger/30 bg-danger-soft px-4 py-2.5 text-sm font-semibold text-danger hover:bg-danger-soft/80"
-            >
-              Retirada
-            </button>
-          )}
-          {can("canManageProducts") && (
-            <button
-              onClick={() => {
-                setEditingProduct(null);
-                setFormOpen(true);
-              }}
-              className="hidden rounded bg-accent px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-dark sm:block"
-            >
-              Cadastrar produto
-            </button>
-          )}
-        </div>
+        <button
+          type="button"
+          onClick={() => setViewArchived((v) => !v)}
+          className="text-sm font-medium text-steel hover:underline"
+        >
+          {viewArchived ? "Ver produtos ativos" : "Ver produtos arquivados"}
+        </button>
       </div>
 
-      <div className="mb-4">
+      <div className="my-4">
         <SearchBar value={search} onChange={setSearch} placeholder="Buscar por nome ou fabricante" />
       </div>
 
@@ -160,7 +145,7 @@ export function ProductsList() {
         </div>
       ) : products.length === 0 ? (
         <div className="rounded border border-dashed border-line bg-white py-16 text-center">
-          <p className="text-sm text-muted">Nenhum produto encontrado.</p>
+          <p className="text-sm text-muted">{viewArchived ? "Nenhum produto arquivado." : "Nenhum produto encontrado."}</p>
         </div>
       ) : (
         <>
@@ -174,21 +159,6 @@ export function ProductsList() {
           </div>
           <Pagination page={page} totalPages={totalPages} onChange={setPage} />
         </>
-      )}
-
-      {can("canManageProducts") && (
-        <button
-          onClick={() => {
-            setEditingProduct(null);
-            setFormOpen(true);
-          }}
-          className="fixed bottom-20 right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-white shadow-lg sm:hidden"
-          aria-label="Cadastrar produto"
-        >
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-        </button>
       )}
 
       <ProductForm
@@ -211,20 +181,7 @@ export function ProductsList() {
             setFormOpen(true);
             setSelectedProductId(null);
           }}
-          onStockIn={(product) => setMovementModal({ product, type: "ENTRADA" })}
-          onStockOut={(product) => setMovementModal({ product, type: "RETIRADA" })}
           onChanged={refreshList}
-        />
-      )}
-
-      {movementModal && (
-        <ProductMovementModal
-          open
-          product={movementModal.product}
-          type={movementModal.type}
-          onClose={() => setMovementModal(null)}
-          onSubmitEntrada={handleEntradaSubmit}
-          onSubmitSaida={handleSaidaSubmit}
         />
       )}
 
