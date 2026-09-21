@@ -7,6 +7,7 @@ import type {
   Product,
   ProductBatch,
   ProductMovement,
+  ProductOutputByMonth,
 } from "@/types";
 
 export interface ProductsFilters {
@@ -33,6 +34,8 @@ export async function getProduct(id: string, historyPage = 1) {
 export interface CreateProductPayload {
   name: string;
   manufacturer: string;
+  initialQuantity: number;
+  totalValueReais?: number;
 }
 
 export async function createProduct(payload: CreateProductPayload) {
@@ -40,7 +43,7 @@ export async function createProduct(payload: CreateProductPayload) {
   return data.product;
 }
 
-export async function updateProduct(id: string, payload: Partial<CreateProductPayload>) {
+export async function updateProduct(id: string, payload: { name?: string; manufacturer?: string }) {
   const { data } = await api.patch<{ product: Product }>(`/products/${id}`, payload);
   return data.product;
 }
@@ -48,12 +51,12 @@ export async function updateProduct(id: string, payload: Partial<CreateProductPa
 export async function createEntrada(
   productId: string,
   quantity: number,
-  unitCostReais: number,
+  totalValueReais: number,
   description?: string
 ) {
   const { data } = await api.post<{ movement: ProductMovement }>(`/products/${productId}/entrada`, {
     quantity,
-    unitCostReais,
+    totalValueReais,
     description,
   });
   return data.movement;
@@ -97,5 +100,10 @@ export async function getConsumptionReport(params: { month?: string; setor?: str
 
 export async function getMonthlyBalance() {
   const { data } = await api.get<{ items: MonthlyBalanceRow[] }>("/products/reports/monthly-balance");
+  return data.items;
+}
+
+export async function getOutputByMonth() {
+  const { data } = await api.get<{ items: ProductOutputByMonth[] }>("/products/reports/output-by-month");
   return data.items;
 }
