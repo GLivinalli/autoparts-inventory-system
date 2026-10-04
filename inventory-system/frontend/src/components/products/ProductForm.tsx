@@ -1,19 +1,28 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import type { Product } from "@/types";
 import { getApiErrorMessage } from "@/api/client";
-import { useDebounce } from "@/hooks/useDebounce";
 import * as productsApi from "@/api/products";
+import { onlyDigits, sanitizeMoney } from "@/utils/inputs";
 
 export interface ProductFormValues {
   name: string;
   manufacturer: string;
   initialQuantity: string;
   totalValueReais: string;
+  // Preenchido quando o usuario escolhe um produto que JA existe na lista:
+  // nesse caso o botao final registra uma ENTRADA nele, em vez de criar outro.
+  existingProductId: string;
 }
 
+const NEW_OPTION = "__new__";
+
 function emptyForm(): ProductFormValues {
-  return { name: "", manufacturer: "", initialQuantity: "", totalValueReais: "" };
+  return { name: "", manufacturer: "", initialQuantity: "", totalValueReais: "", existingProductId: "" };
 }
+
+// O "0" e o "0,00" de sugestao somem assim que o campo e clicado.
+const numberInputClass =
+  "h-11 w-full rounded border border-line px-3 text-sm placeholder:text-muted focus:border-accent focus:placeholder:text-transparent";
 
 interface ProductFormProps {
   open: boolean;
@@ -24,52 +33,38 @@ interface ProductFormProps {
 
 export function ProductForm({ open, editingProduct, onClose, onSubmit }: ProductFormProps) {
   const [values, setValues] = useState<ProductFormValues>(emptyForm());
+  const [products, setProducts] = useState<Product[]>([]);
+  const [newName, setNewName] = useState("");
+  const [notice, setNotice] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [similar, setSimilar] = useState<Product[]>([]);
-  const [searchingSimilar, setSearchingSimilar] = useState(false);
   const initialSnapshotRef = useRef("");
-  const debouncedName = useDebounce(values.name.trim(), 300);
 
   useEffect(() => {
     if (!open) return;
     const initial: ProductFormValues = editingProduct
-      ? {
-          name: editingProduct.name,
-          manufacturer: editingProduct.manufacturer,
-          initialQuantity: "",
-          totalValueReais: "",
-        }
+      ? { ...emptyForm(), name: editingProduct.name, manufacturer: editingProduct.manufacturer }
       : emptyForm();
     setValues(initial);
     initialSnapshotRef.current = JSON.stringify(initial);
+    setNewName("");
+    setNotice(null);
     setError(null);
   }, [open, editingProduct]);
 
-  // Lista de produtos ja cadastrados parecidos com o nome que esta sendo
-  // digitado - para evitar cadastrar o mesmo item duas vezes.
+  // Lista de produtos ja cadastrados (so no cadastro, nao na edicao).
   useEffect(() => {
-    if (!open || editingProduct || debouncedName.length < 2) {
-      setSimilar([]);
-      return;
-    }
-    let active = true;
-    setSearchingSimilar(true);
+    if (!open || editingProduct) return;
     productsApi
-      .listProducts({ page: 1, pageSize: 8, search: debouncedName })
-      .then((data) => {
-        if (active) setSimilar(data.items);
-      })
-      .catch(() => undefined)
-      .finally(() => {
-        if (active) setSearchingSimilar(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [open, editingProduct, debouncedName]);
+      .listProducts({ page: 1, pageSize: 500 })
+      .then((data) => setProducts(data.items))
+      .catch(() => undefined);
+  }, [open, editingProduct]);
 
   if (!open) return null;
+
+  const isExisting = !!values.existingProductId;
+  const selectValue = values.existingProductId || (values.name ? NEW_OPTION : "");
 
   function handleRequestClose() {
     const isDirty = JSON.stringify(values) !== initialSnapshotRef.current;
@@ -79,11 +74,59 @@ export function ProductForm({ open, editingProduct, onClose, onSubmit }: Product
     onClose();
   }
 
+  function handleSelectChange(value: string) {
+    setNotice(null);
+    if (value === "") {
+      setValues((v) => ({ ...v, name: "", manufacturer: "", existingProductId: "" }));
+    } else if (value !== NEW_OPTION) {
+      const product = products.find((p) => p.id === value);
+      if (product) {
+        setValues((v) => ({ ...v, name: "", manufacturer: product.manufacturer, existingProductId: product.id }));
+      }
+    }
+  }
+
+  // Botao "Adicionar": coloca um nome novo na lista. Se o nome ja existe,
+  // seleciona o que ja existe (assim nao nasce produto repetido).
+  function handleAddNew() {
+    const typed = newName.trim().toUpperCase();
+    if (!typed) return;
+
+    const existing = products.find((p) => p.name.trim().toUpperCase() === typed);
+    if (existing) {
+      setValues((v) => ({ ...v, name: "", manufacturer: existing.manufacturer, existingProductId: existing.id }));
+      setNotice(
+        `"${existing.name}" ja esta na lista (${existing.manufacturer}). Selecionei ele pra voce - e so informar a quantidade e o valor.`
+      );
+    } else {
+      setValues((v) => ({
+        ...v,
+        name: typed,
+        existingProductId: "",
+        manufacturer: v.existingProductId ? "" : v.manufacturer,
+      }));
+      setNotice(null);
+    }
+    setNewName("");
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
 
+    if (!editingProduct) {
+      if (!isExisting && !values.name.trim()) {
+        return setError("Selecione um produto da lista ou adicione um novo");
+      }
+      if (!isExisting && !values.manufacturer.trim()) {
+        return setError("Informe o fabricante");
+      }
+    }
+
     const quantity = Number(values.initialQuantity) || 0;
+    if (isExisting && quantity <= 0) {
+      return setError("Informe a quantidade que esta entrando");
+    }
     if (quantity > 0) {
       if (!values.totalValueReais.trim()) return setError("Informe o valor total pago");
       const value = Number(values.totalValueReais.replace(",", "."));
@@ -99,8 +142,6 @@ export function ProductForm({ open, editingProduct, onClose, onSubmit }: Product
       setSubmitting(false);
     }
   }
-
-  const showSimilar = !editingProduct && debouncedName.length >= 2;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-ink/40 sm:items-center sm:p-4">
@@ -120,45 +161,68 @@ export function ProductForm({ open, editingProduct, onClose, onSubmit }: Product
         </div>
 
         <div className="space-y-4">
-          <div>
-            <label className="mb-1 block text-sm font-medium text-ink">Nome do produto</label>
-            <input
-              required
-              value={values.name}
-              onChange={(e) => setValues((v) => ({ ...v, name: e.target.value }))}
-              placeholder="Ex.: PAPEL A4, LUVA DE PROCEDIMENTO"
-              className="h-11 w-full rounded border border-line px-3 text-sm uppercase focus:border-accent"
-            />
-
-            {showSimilar && (
-              <div className="mt-2 rounded border border-line bg-surface p-2">
-                <p className="mb-1 text-xs font-medium text-muted">Produtos ja cadastrados parecidos:</p>
-                {searchingSimilar ? (
-                  <p className="text-xs text-muted">Buscando...</p>
-                ) : similar.length === 0 ? (
-                  <p className="text-xs text-muted">Nenhum parecido encontrado - pode cadastrar.</p>
-                ) : (
-                  <ul className="max-h-36 space-y-1 overflow-y-auto">
-                    {similar.map((p) => (
-                      <li key={p.id} className="text-xs text-ink">
-                        {p.name} <span className="text-muted">- {p.manufacturer} (estoque: {p.quantity})</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+          {editingProduct ? (
+            <div>
+              <label className="mb-1 block text-sm font-medium text-ink">Nome do produto</label>
+              <input
+                required
+                value={values.name}
+                onChange={(e) => setValues((v) => ({ ...v, name: e.target.value }))}
+                className="h-11 w-full rounded border border-line px-3 text-sm uppercase focus:border-accent"
+              />
+            </div>
+          ) : (
+            <div>
+              <label className="mb-1 block text-sm font-medium text-ink">Nome do produto</label>
+              <select
+                value={selectValue}
+                onChange={(e) => handleSelectChange(e.target.value)}
+                className="h-11 w-full rounded border border-line bg-white px-3 text-sm focus:border-accent"
+              >
+                <option value="">Selecione</option>
+                {values.name && !isExisting && <option value={NEW_OPTION}>{values.name} (novo)</option>}
+                {products.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} - {p.manufacturer}
+                  </option>
+                ))}
+              </select>
+              <div className="mt-2 flex gap-2">
+                <input
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddNew();
+                    }
+                  }}
+                  placeholder="Cadastrar novo produto"
+                  className="h-9 flex-1 rounded border border-line px-3 text-sm uppercase focus:border-accent"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddNew}
+                  className="rounded border border-line px-3 text-sm font-medium text-steel hover:bg-steel-soft disabled:opacity-60"
+                >
+                  Adicionar
+                </button>
               </div>
-            )}
-          </div>
+              {notice && <p className="mt-2 text-xs text-steel">{notice}</p>}
+            </div>
+          )}
 
           <div>
             <label className="mb-1 block text-sm font-medium text-ink">Fabricante</label>
             <input
-              required
+              required={!!editingProduct}
+              disabled={isExisting}
               value={values.manufacturer}
               onChange={(e) => setValues((v) => ({ ...v, manufacturer: e.target.value }))}
               placeholder="Ex.: CHAMEX, DESCARPACK"
-              className="h-11 w-full rounded border border-line px-3 text-sm uppercase focus:border-accent"
+              className="h-11 w-full rounded border border-line px-3 text-sm uppercase focus:border-accent disabled:bg-surface disabled:text-muted"
             />
+            {isExisting && <p className="mt-1 text-xs text-muted">Fabricante do produto selecionado.</p>}
           </div>
 
           {!editingProduct && (
@@ -166,27 +230,29 @@ export function ProductForm({ open, editingProduct, onClose, onSubmit }: Product
               <div>
                 <label className="mb-1 block text-sm font-medium text-ink">Quantidade</label>
                 <input
-                  type="number"
-                  min={0}
+                  type="text"
+                  inputMode="numeric"
                   value={values.initialQuantity}
-                  onChange={(e) => setValues((v) => ({ ...v, initialQuantity: e.target.value }))}
+                  onChange={(e) => setValues((v) => ({ ...v, initialQuantity: onlyDigits(e.target.value) }))}
                   placeholder="0"
-                  className="h-11 w-full rounded border border-line px-3 text-sm focus:border-accent"
+                  className={numberInputClass}
                 />
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium text-ink">Valor total (R$)</label>
                 <input
+                  type="text"
                   inputMode="decimal"
                   value={values.totalValueReais}
-                  onChange={(e) => setValues((v) => ({ ...v, totalValueReais: e.target.value }))}
+                  onChange={(e) => setValues((v) => ({ ...v, totalValueReais: sanitizeMoney(e.target.value) }))}
                   placeholder="0,00"
-                  className="h-11 w-full rounded border border-line px-3 text-sm focus:border-accent"
+                  className={numberInputClass}
                 />
               </div>
               <p className="col-span-2 text-xs text-muted">
-                Informe quanto voce pagou no total pela quantidade acima - o custo por unidade e calculado sozinho.
-                Se deixar a quantidade vazia, o produto fica cadastrado sem estoque.
+                {isExisting
+                  ? "Informe a quantidade que esta entrando e quanto voce pagou no total - a entrada soma no estoque desse produto."
+                  : "Informe quanto voce pagou no total pela quantidade acima - o custo por unidade e calculado sozinho. Se deixar a quantidade vazia, o produto fica cadastrado sem estoque."}
               </p>
             </div>
           )}
@@ -203,7 +269,7 @@ export function ProductForm({ open, editingProduct, onClose, onSubmit }: Product
             disabled={submitting}
             className="rounded bg-accent px-5 py-2.5 text-sm font-semibold text-white hover:bg-accent-dark disabled:opacity-60"
           >
-            {submitting ? "Salvando..." : "Salvar"}
+            {submitting ? "Salvando..." : isExisting ? "Registrar entrada" : "Salvar"}
           </button>
         </div>
       </form>
