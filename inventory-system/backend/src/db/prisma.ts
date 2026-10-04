@@ -10,7 +10,13 @@ declare global {
 export const prisma =
   global.__prisma ??
   new PrismaClient({
-    log: isProduction ? ["error", "warn"] : ["error", "warn"],
+    log: ["error", "warn"],
+    // O padrao do Prisma e 5s por transacao. Com o banco no Neon (que
+    // "acorda" depois de ficar parado) isso estourava ao salvar produtos.
+    transactionOptions: {
+      maxWait: 10000,
+      timeout: 20000,
+    },
   });
 
 if (!isProduction) {
