@@ -14,25 +14,16 @@ interface ProductDetailModalProps {
   productId: string;
   onClose: () => void;
   onEdit: (product: Product) => void;
-  onStockIn: (product: Product) => void;
-  onStockOut: (product: Product) => void;
   onChanged: () => void;
   refreshKey: number;
 }
 
-export function ProductDetailModal({
-  productId,
-  onClose,
-  onEdit,
-  onStockIn,
-  onStockOut,
-  onChanged,
-  refreshKey,
-}: ProductDetailModalProps) {
-  const { can } = useAuth();
+export function ProductDetailModal({ productId, onClose, onEdit, onChanged, refreshKey }: ProductDetailModalProps) {
+  const { can, isAdmin } = useAuth();
   const { notify } = useToast();
   const [product, setProduct] = useState<Product | null>(null);
   const [daysInStock, setDaysInStock] = useState<number | null>(null);
+  const [stockValueCents, setStockValueCents] = useState(0);
   const [batches, setBatches] = useState<ProductBatch[]>([]);
   const [history, setHistory] = useState<ProductMovement[]>([]);
   const [historyPage, setHistoryPage] = useState(1);
@@ -41,6 +32,13 @@ export function ProductDetailModal({
   const [error, setError] = useState<string | null>(null);
   const [deletingMovement, setDeletingMovement] = useState<ProductMovement | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [confirmingArchive, setConfirmingArchive] = useState(false);
+  const [archiving, setArchiving] = useState(false);
+  const [editingDateMovement, setEditingDateMovement] = useState<ProductMovement | null>(null);
+  const [newDate, setNewDate] = useState("");
+  const [savingDate, setSavingDate] = useState(false);
+
+  const today = new Date().toISOString().slice(0, 10);
 
   useEffect(() => {
     let active = true;
@@ -51,6 +49,7 @@ export function ProductDetailModal({
         if (!active) return;
         setProduct(data.product);
         setDaysInStock(data.daysInStock);
+        setStockValueCents(data.stockValueCents);
         setBatches(data.batches);
         setHistory(data.history.items);
         setTotalPages(data.history.totalPages);
@@ -77,6 +76,43 @@ export function ProductDetailModal({
     }
   }
 
+  async function handleArchiveToggle() {
+    if (!product) return;
+    setArchiving(true);
+    try {
+      const updated = product.archivedAt
+        ? await productsApi.unarchiveProduct(product.id)
+        : await productsApi.archiveProduct(product.id);
+      setProduct(updated);
+      setConfirmingArchive(false);
+      onChanged();
+    } catch (err) {
+      notify(getApiErrorMessage(err), "error");
+    } finally {
+      setArchiving(false);
+    }
+  }
+
+  function openDateEditor(movement: ProductMovement) {
+    setEditingDateMovement(movement);
+    setNewDate(movement.createdAt.slice(0, 10));
+  }
+
+  async function handleSaveDate() {
+    if (!editingDateMovement || !newDate) return;
+    setSavingDate(true);
+    try {
+      await productsApi.updateMovementDate(editingDateMovement.id, newDate);
+      notify("Data da entrada alterada", "success");
+      setEditingDateMovement(null);
+      onChanged();
+    } catch (err) {
+      notify(getApiErrorMessage(err, "Nao foi possivel alterar a data"), "error");
+    } finally {
+      setSavingDate(false);
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-ink/40 sm:items-center sm:p-4">
       <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-md bg-white shadow-lg sm:rounded-md">
@@ -99,8 +135,13 @@ export function ProductDetailModal({
 
         {product && !loading && (
           <div className="p-5">
-            <h3 className="font-display text-2xl font-semibold text-ink">{product.name}</h3>
-            <p className="text-sm text-muted">{product.manufacturer}</p>
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <h3 className="font-display text-2xl font-semibold text-ink">{product.name}</h3>
+                <p className="text-sm text-muted">{product.manufacturer}</p>
+              </div>
+              {product.archivedAt && <Badge tone="neutral">Arquivado</Badge>}
+            </div>
 
             <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
               <div className="rounded border border-line p-3">
@@ -110,6 +151,10 @@ export function ProductDetailModal({
                 </p>
               </div>
               <div className="rounded border border-line p-3">
+                <p className="text-xs text-muted">Valor em estoque</p>
+                <p className="mt-1 text-sm font-semibold text-ink">{formatCentsToBRL(stockValueCents)}</p>
+              </div>
+              <div className="rounded border border-line p-3">
                 <p className="text-xs text-muted">Dias em estoque</p>
                 <p className="mt-1 text-sm font-medium text-ink">{daysInStock ?? "-"}</p>
               </div>
@@ -117,35 +162,28 @@ export function ProductDetailModal({
                 <p className="text-xs text-muted">Cadastrado por</p>
                 <p className="mt-1 truncate text-sm font-medium text-ink">{product.createdBy.name}</p>
               </div>
-              <div className="rounded border border-line p-3">
-                <p className="text-xs text-muted">Cadastro no sistema</p>
-                <p className="mt-1 text-sm font-medium text-ink">{formatDateTime(product.createdAt)}</p>
-              </div>
             </div>
 
             <div className="mt-4 flex flex-wrap gap-2">
-              {can("canStockInProducts") && (
-                <button
-                  onClick={() => onStockIn(product)}
-                  className="rounded bg-success px-4 py-2.5 text-sm font-semibold text-white hover:bg-success/90"
-                >
-                  Entrada
-                </button>
-              )}
-              {can("canStockOutProducts") && (
-                <button
-                  onClick={() => onStockOut(product)}
-                  className="rounded bg-danger px-4 py-2.5 text-sm font-semibold text-white hover:bg-danger/90"
-                >
-                  Saida
-                </button>
-              )}
-              {can("canManageProducts") && (
+              {can("canManageProducts") && !product.archivedAt && (
                 <button
                   onClick={() => onEdit(product)}
                   className="rounded border border-line px-4 py-2.5 text-sm font-medium text-ink hover:bg-surface"
                 >
                   Editar
+                </button>
+              )}
+              {can("canManageProducts") && (
+                <button
+                  onClick={() => (product.archivedAt ? handleArchiveToggle() : setConfirmingArchive(true))}
+                  disabled={archiving}
+                  className={`rounded px-4 py-2.5 text-sm font-medium ${
+                    product.archivedAt
+                      ? "border border-line text-ink hover:bg-surface"
+                      : "text-muted hover:bg-surface"
+                  }`}
+                >
+                  {product.archivedAt ? "Reativar" : "Arquivar"}
                 </button>
               )}
             </div>
@@ -186,8 +224,8 @@ export function ProductDetailModal({
                         {m.description ? ` - ${m.description}` : ""}
                       </p>
                     </div>
-                    <div className="flex shrink-0 items-center gap-2">
-                      <div className="text-right">
+                    <div className="flex shrink-0 items-center gap-1">
+                      <div className="mr-1 text-right">
                         <p
                           className={`font-display text-lg font-semibold ${
                             m.type === "ENTRADA" ? "text-success" : "text-danger"
@@ -198,6 +236,19 @@ export function ProductDetailModal({
                         </p>
                         <p className="text-xs text-muted">{formatCentsToBRL(m.totalCents)}</p>
                       </div>
+                      {isAdmin && m.type === "ENTRADA" && (
+                        <button
+                          onClick={() => openDateEditor(m)}
+                          className="rounded p-1.5 text-muted hover:bg-steel-soft hover:text-steel"
+                          aria-label="Alterar data da entrada"
+                          title="Alterar data da entrada"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" />
+                            <path d="M16 2v4M8 2v4M3 10h18" />
+                          </svg>
+                        </button>
+                      )}
                       {can("canDeleteProductMoves") && (
                         <button
                           onClick={() => setDeletingMovement(m)}
@@ -219,6 +270,43 @@ export function ProductDetailModal({
         )}
       </div>
 
+      {editingDateMovement && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 p-0 sm:items-center sm:p-4">
+          <div className="w-full max-w-sm rounded-t-md bg-white p-5 shadow-lg sm:rounded-md">
+            <h3 className="font-display text-xl font-semibold text-ink">Alterar data da entrada</h3>
+            <p className="mt-1 text-sm text-muted">
+              Entrada de {editingDateMovement.quantity} unidade(s). A nova data passa a valer no historico, nos dias em
+              estoque, na ordem do FIFO e nos relatorios por mes. Saidas que ja foram feitas nao sao recalculadas.
+            </p>
+            <label className="mb-1 mt-4 block text-sm font-medium text-ink">Nova data</label>
+            <input
+              type="date"
+              value={newDate}
+              max={today}
+              onChange={(e) => setNewDate(e.target.value)}
+              className="h-11 w-full rounded border border-line px-3 text-sm focus:border-accent"
+            />
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setEditingDateMovement(null)}
+                className="rounded px-4 py-2.5 text-sm font-medium text-muted hover:bg-surface"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveDate}
+                disabled={savingDate || !newDate}
+                className="rounded bg-accent px-5 py-2.5 text-sm font-semibold text-white hover:bg-accent-dark disabled:opacity-60"
+              >
+                {savingDate ? "Salvando..." : "Salvar data"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <ConfirmDialog
         open={!!deletingMovement}
         title="Excluir movimentacao"
@@ -232,6 +320,17 @@ export function ProductDetailModal({
         confirmLabel="Excluir"
         onConfirm={handleConfirmDelete}
         onCancel={() => setDeletingMovement(null)}
+      />
+
+      <ConfirmDialog
+        open={confirmingArchive}
+        title="Arquivar produto"
+        tone="danger"
+        loading={archiving}
+        description="O produto sai da listagem ativa, mas todo o historico e mantido. Voce pode reativar depois."
+        confirmLabel="Arquivar"
+        onConfirm={handleArchiveToggle}
+        onCancel={() => setConfirmingArchive(false)}
       />
     </div>
   );
