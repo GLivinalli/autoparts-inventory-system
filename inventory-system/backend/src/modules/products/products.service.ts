@@ -16,6 +16,22 @@ import {
 function reaisToCents(reais: number) {
   return Math.round(reais * 100);
 }
+async function assertNoDuplicateProduct(name: string, manufacturer: string, ignoreId?: string) {
+  const duplicate = await prisma.product.findFirst({
+    where: {
+      name: { equals: name, mode: "insensitive" },
+      manufacturer: { equals: manufacturer, mode: "insensitive" },
+      ...(ignoreId ? { id: { not: ignoreId } } : {}),
+    },
+  });
+  if (duplicate) {
+    throw AppError.conflict(
+      duplicate.archivedAt
+        ? "Ja existe um produto igual, mas ele esta arquivado. Reative-o em vez de cadastrar de novo."
+        : "Ja existe um produto cadastrado com esse nome e fabricante."
+    );
+  }
+}
 
 export async function listProducts(query: ListProductsQuery) {
   const pagination = parsePagination(query);
