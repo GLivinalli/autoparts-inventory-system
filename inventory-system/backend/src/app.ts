@@ -6,7 +6,6 @@ import cookieParser from "cookie-parser";
 import { env } from "@/config/env";
 import { apiLimiter } from "@/middleware/rateLimit";
 import { errorHandler } from "@/middleware/errorHandler";
-import productsRoutes from "@/modules/products/products.routes";
 
 import authRoutes from "@/modules/auth/auth.routes";
 import usersRoutes from "@/modules/users/users.routes";
@@ -16,16 +15,15 @@ import movementsRoutes from "@/modules/movements/movements.routes";
 import dashboardRoutes from "@/modules/dashboard/dashboard.routes";
 import uploadRoutes from "@/modules/upload/upload.routes";
 import auditRoutes from "@/modules/audit/audit.routes";
+import productsRoutes from "@/modules/products/products.routes";
+import productListsRoutes from "@/modules/productlists/productlists.routes";
 
 export const app = express();
 
 // Headers de seguranca padrao (X-Content-Type-Options, HSTS, etc).
 app.use(helmet());
 
-// Comprime as respostas (gzip) antes de enviar: json das listagens e do
-// dashboard fica bem menor no ar, ajuda principalmente em conexao de dados
-// moveis. Nao comprime respostas ja pequenas (abaixo do threshold), para
-// nao gastar CPU a toa nelas.
+// Comprime as respostas (gzip) antes de enviar.
 app.use(compression({ threshold: 1024 }));
 
 // So aceita requisicoes do frontend configurado, com cookies inclusos.
@@ -63,6 +61,7 @@ app.use("/dashboard", dashboardRoutes);
 app.use("/uploads", uploadRoutes);
 app.use("/audit", auditRoutes);
 app.use("/products", productsRoutes);
+app.use("/product-lists", productListsRoutes);
 
 app.use((_req, res) => {
   res.status(404).json({ error: { code: "NOT_FOUND", message: "Rota nao encontrada" } });
