@@ -14,8 +14,8 @@ export function QuickEntryModal({ open, onClose, onSubmit }: QuickEntryModalProp
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [productId, setProductId] = useState("");
-  const [quantity, setQuantity] = useState("1");
-  const [totalValueReais, setTotalValueReais] = useState("0,00");
+  const [quantity, setQuantity] = useState("");
+  const [totalValueReais, setTotalValueReais] = useState("");
   const [description, setDescription] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
@@ -40,6 +40,7 @@ export function QuickEntryModal({ open, onClose, onSubmit }: QuickEntryModalProp
   function validate(): string | null {
     if (!productId) return "Selecione um produto";
     if (!Number.isInteger(parsedQuantity) || parsedQuantity <= 0) return "Informe uma quantidade valida";
+    if (!totalValueReais.trim()) return "Informe o valor total pago";
     if (Number.isNaN(parsedValue) || parsedValue < 0) return "Informe um valor total valido";
     return null;
   }
@@ -57,8 +58,8 @@ export function QuickEntryModal({ open, onClose, onSubmit }: QuickEntryModalProp
       await onSubmit(productId, parsedQuantity, parsedValue, description.trim() || undefined);
       setConfirming(false);
       setProductId("");
-      setQuantity("1");
-      setTotalValueReais("0,00");
+      setQuantity("");
+      setTotalValueReais("");
       setDescription("");
     } catch (err) {
       setError(getApiErrorMessage(err, "Nao foi possivel registrar a entrada"));
@@ -105,6 +106,7 @@ export function QuickEntryModal({ open, onClose, onSubmit }: QuickEntryModalProp
             min={1}
             value={quantity}
             onChange={(e) => setQuantity(e.target.value)}
+            placeholder="0"
             className="mb-3 h-12 w-full rounded border border-line px-3 text-center text-lg font-semibold focus:border-accent"
           />
 
