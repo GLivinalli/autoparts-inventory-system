@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { requireAuth } from "@/middleware/auth";
 import { Role } from "@prisma/client";
+import { requireAuth } from "@/middleware/auth";
 import { requirePermission, requireRole } from "@/middleware/rbac";
 import { validate } from "@/middleware/validate";
 import * as controller from "./products.controller";
