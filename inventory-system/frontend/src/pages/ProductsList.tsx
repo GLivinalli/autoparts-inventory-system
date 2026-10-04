@@ -70,6 +70,13 @@ export function ProductsList() {
     if (editingProduct) {
       await productsApi.updateProduct(editingProduct.id, { name: values.name, manufacturer: values.manufacturer });
       notify("Produto atualizado com sucesso", "success");
+        } else if (values.existingProductId) {
+      await productsApi.createEntrada(
+        values.existingProductId,
+        Number(values.initialQuantity) || 0,
+        Number(values.totalValueReais.replace(",", ".")) || 0
+      );
+      notify("Entrada registrada no produto existente", "success");
     } else {
       const initialQuantity = Number(values.initialQuantity) || 0;
       const totalValueReais = Number(values.totalValueReais.replace(",", "."));
