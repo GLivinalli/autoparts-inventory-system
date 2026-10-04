@@ -9,16 +9,12 @@ import { ProductCard } from "@/components/products/ProductCard";
 import { ProductForm, ProductFormValues } from "@/components/products/ProductForm";
 import { ProductDetailModal } from "@/components/products/ProductDetailModal";
 import { QuickWithdrawalModal } from "@/components/products/QuickWithdrawalModal";
-import { QuickEntryModal } from "@/components/products/QuickEntryModal";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { useDebounce } from "@/hooks/useDebounce";
 import * as productsApi from "@/api/products";
 import { getApiErrorMessage } from "@/api/client";
 
-// Os 4 botoes (Estoque, Relatorios, Retirada, Cadastrar produto) usam o
-// MESMO estilo base - a unica diferenca e a aba ativa ficar com as cores
-// invertidas, para ainda dar pra saber onde voce esta.
 const actionButtonClass =
   "rounded border border-line bg-white px-4 py-2.5 text-sm font-medium text-ink hover:bg-surface";
 const activeTabClass = "rounded bg-ink px-4 py-2.5 text-sm font-medium text-white";
@@ -40,7 +36,6 @@ export function ProductsList() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [quickWithdrawalOpen, setQuickWithdrawalOpen] = useState(false);
-  const [quickEntryOpen, setQuickEntryOpen] = useState(false);
   const [detailRefreshKey, setDetailRefreshKey] = useState(0);
 
   useEffect(() => {
@@ -70,7 +65,7 @@ export function ProductsList() {
     if (editingProduct) {
       await productsApi.updateProduct(editingProduct.id, { name: values.name, manufacturer: values.manufacturer });
       notify("Produto atualizado com sucesso", "success");
-        } else if (values.existingProductId) {
+    } else if (values.existingProductId) {
       await productsApi.createEntrada(
         values.existingProductId,
         Number(values.initialQuantity) || 0,
@@ -106,18 +101,6 @@ export function ProductsList() {
     refreshList();
   }
 
-  async function handleQuickEntry(
-    productId: string,
-    quantity: number,
-    totalValueReais: number,
-    description?: string
-  ) {
-    await productsApi.createEntrada(productId, quantity, totalValueReais, description);
-    notify("Entrada registrada", "success");
-    setQuickEntryOpen(false);
-    refreshList();
-  }
-
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -130,11 +113,6 @@ export function ProductsList() {
         {can("canStockOutProducts") && (
           <button onClick={() => setQuickWithdrawalOpen(true)} className={actionButtonClass}>
             Retirada
-          </button>
-        )}
-        {can("canStockInProducts") && (
-          <button onClick={() => setQuickEntryOpen(true)} className={actionButtonClass}>
-            Entrada
           </button>
         )}
         {can("canManageProducts") && (
@@ -219,8 +197,6 @@ export function ProductsList() {
         onClose={() => setQuickWithdrawalOpen(false)}
         onSubmit={handleQuickWithdrawal}
       />
-
-      <QuickEntryModal open={quickEntryOpen} onClose={() => setQuickEntryOpen(false)} onSubmit={handleQuickEntry} />
     </div>
   );
 }
