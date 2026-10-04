@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { asyncHandler } from "@/utils/asyncHandler";
+import { assertSectorAndEmployee } from "@/modules/productlists/productlists.service";
 import * as service from "./products.service";
 
 export const list = asyncHandler(async (req: Request, res: Response) => {
@@ -38,6 +39,7 @@ export const createEntrada = asyncHandler(async (req: Request, res: Response) =>
 });
 
 export const createSaida = asyncHandler(async (req: Request, res: Response) => {
+  await assertSectorAndEmployee(req.body.setor, req.body.funcionario);
   const movement = await service.createSaida(req.params.id, req.body, req.user!.id);
   res.status(201).json({ movement });
 });
