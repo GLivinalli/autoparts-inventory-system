@@ -73,6 +73,33 @@ export const updateMovementDateSchema = z.object({
     .refine((v) => !Number.isNaN(new Date(`${v}T12:00:00.000Z`).getTime()), "Data invalida")
     .refine((v) => v <= new Date().toISOString().slice(0, 10), "A data nao pode ser no futuro"),
 });
+// Somente ADMIN (a rota exige). Altera a data de uma ENTRADA e do lote que
+// ela criou - e a data do lote que define a ordem do FIFO e os "dias em
+// estoque". A saidas ja registradas nao sao recalculadas.
+export async function updateMovementDate(movementId: string, date: string, userId: string) {
+  const movement = await movementsRepo.findById(movementId);
+  if (!movement) throw AppError.notFound("Movimentacao nao encontrada");
+  if (movement.type !== MovementType.ENTRADA) {
+    throw AppError.validation("So e possivel alterar a data de entradas");
+  }
+
+  // 12:00 UTC para a data nunca "virar" de dia por causa de fuso horario.
+  const newDate = new Date(`${date}T12:00:00.000Z`);
+
+  await prisma.$transaction(async (tx) => {
+    await tx.productMovement.update({ where: { id: movementId }, data: { createdAt: newDate } });
+    await tx.productBatch.updateMany({ where: { movementId }, data: { createdAt: newDate } });
+  });
+
+  await logAudit({
+    userId,
+    action: "UPDATE_PRODUCT_MOVEMENT_DATE",
+    entity: "ProductMovement",
+    entityId: movementId,
+    before: { createdAt: movement.createdAt },
+    after: { createdAt: newDate },
+  });
+}
 export type CreateProductInput = z.infer<typeof createProductSchema>;
 export type UpdateProductInput = z.infer<typeof updateProductSchema>;
 export type ListProductsQuery = z.infer<typeof listProductsQuerySchema>;
