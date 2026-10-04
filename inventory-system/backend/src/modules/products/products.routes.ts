@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { requireAuth } from "@/middleware/auth";
-import { requirePermission } from "@/middleware/rbac";
+import { Role } from "@prisma/client";
+import { requirePermission, requireRole } from "@/middleware/rbac";
 import { validate } from "@/middleware/validate";
 import * as controller from "./products.controller";
 import {
@@ -11,6 +12,7 @@ import {
   createSaidaSchema,
   listProductMovementsQuerySchema,
   consumptionReportQuerySchema,
+  updateMovementDateSchema,
 } from "./products.validation";
 
 const router = Router();
@@ -23,6 +25,12 @@ router.get("/movements", validate(listProductMovementsQuerySchema, "query"), con
 router.get("/reports/consumption", validate(consumptionReportQuerySchema, "query"), controller.consumptionReport);
 router.get("/reports/monthly-balance", controller.monthlyBalance);
 router.get("/reports/output-by-month", controller.outputByMonth);
+router.patch(
+  "/movements/:movementId/date",
+  requireRole(Role.ADMIN),
+  validate(updateMovementDateSchema),
+  controller.updateMovementDate
+);
 router.delete("/movements/:movementId", requirePermission("canDeleteProductMoves"), controller.deleteMovement);
 
 router.get("/", validate(listProductsQuerySchema, "query"), controller.list);
