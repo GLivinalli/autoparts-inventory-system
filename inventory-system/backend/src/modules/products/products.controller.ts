@@ -47,6 +47,11 @@ export const deleteMovement = asyncHandler(async (req: Request, res: Response) =
   res.status(204).send();
 });
 
+export const updateMovementDate = asyncHandler(async (req: Request, res: Response) => {
+  await service.updateMovementDate(req.params.movementId, req.body.date, req.user!.id);
+  res.status(204).send();
+});
+
 export const listMovements = asyncHandler(async (req: Request, res: Response) => {
   const result = await service.listMovements(req.query as Record<string, unknown>);
   res.json(result);
@@ -67,8 +72,4 @@ export const monthlyBalance = asyncHandler(async (_req: Request, res: Response) 
 export const outputByMonth = asyncHandler(async (_req: Request, res: Response) => {
   const items = await service.getProductOutputByMonth();
   res.json({ items });
-});
-export const updateMovementDate = asyncHandler(async (req: Request, res: Response) => {
-  await service.updateMovementDate(req.params.movementId, req.body.date, req.user!.id);
-  res.status(204).send();
 });
