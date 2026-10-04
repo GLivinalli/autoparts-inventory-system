@@ -66,7 +66,13 @@ export const consumptionReportQuerySchema = z.object({
   setor: z.string().trim().optional(),
   funcionario: z.string().trim().optional(),
 });
-
+export const updateMovementDateSchema = z.object({
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Data invalida")
+    .refine((v) => !Number.isNaN(new Date(`${v}T12:00:00.000Z`).getTime()), "Data invalida")
+    .refine((v) => v <= new Date().toISOString().slice(0, 10), "A data nao pode ser no futuro"),
+});
 export type CreateProductInput = z.infer<typeof createProductSchema>;
 export type UpdateProductInput = z.infer<typeof updateProductSchema>;
 export type ListProductsQuery = z.infer<typeof listProductsQuerySchema>;
