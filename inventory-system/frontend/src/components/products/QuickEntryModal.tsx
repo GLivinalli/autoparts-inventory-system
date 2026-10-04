@@ -3,6 +3,7 @@ import type { Product } from "@/types";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { getApiErrorMessage } from "@/api/client";
 import * as productsApi from "@/api/products";
+import { onlyDigits, sanitizeMoney } from "@/utils/inputs";
 
 interface QuickEntryModalProps {
   open: boolean;
@@ -102,21 +103,22 @@ export function QuickEntryModal({ open, onClose, onSubmit }: QuickEntryModalProp
 
           <label className="mb-1 block text-sm font-medium text-ink">Quantidade</label>
           <input
-            type="number"
-            min={1}
+            type="text"
+            inputMode="numeric"
             value={quantity}
-            onChange={(e) => setQuantity(e.target.value)}
+            onChange={(e) => setQuantity(onlyDigits(e.target.value))}
             placeholder="0"
-            className="mb-3 h-12 w-full rounded border border-line px-3 text-center text-lg font-semibold focus:border-accent"
+            className="mb-3 h-12 w-full rounded border border-line px-3 text-center text-lg font-semibold placeholder:text-muted focus:border-accent focus:placeholder:text-transparent"
           />
 
           <label className="mb-1 block text-sm font-medium text-ink">Valor total pago (R$)</label>
           <input
+            type="text"
             inputMode="decimal"
             value={totalValueReais}
-            onChange={(e) => setTotalValueReais(e.target.value)}
+            onChange={(e) => setTotalValueReais(sanitizeMoney(e.target.value))}
             placeholder="0,00"
-            className="mb-1 h-11 w-full rounded border border-line px-3 text-sm focus:border-accent"
+            className="mb-1 h-11 w-full rounded border border-line px-3 text-sm placeholder:text-muted focus:border-accent focus:placeholder:text-transparent"
           />
           <p className="mb-3 text-xs text-muted">
             Valor total da compra dessas {parsedQuantity || 0} unidades - o custo por unidade e calculado sozinho.
