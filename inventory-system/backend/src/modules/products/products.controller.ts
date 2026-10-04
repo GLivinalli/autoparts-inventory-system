@@ -68,3 +68,7 @@ export const outputByMonth = asyncHandler(async (_req: Request, res: Response) =
   const items = await service.getProductOutputByMonth();
   res.json({ items });
 });
+export const updateMovementDate = asyncHandler(async (req: Request, res: Response) => {
+  await service.updateMovementDate(req.params.movementId, req.body.date, req.user!.id);
+  res.status(204).send();
+});
