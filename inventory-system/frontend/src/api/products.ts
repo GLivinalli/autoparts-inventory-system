@@ -119,3 +119,6 @@ export async function getOutputByMonth() {
   const { data } = await api.get<{ items: ProductOutputByMonth[] }>("/products/reports/output-by-month");
   return data.items;
 }
+export async function updateMovementDate(movementId: string, date: string) {
+  await api.patch(`/products/movements/${movementId}/date`, { date });
+}
