@@ -1,8 +1,3 @@
-// Schema do banco de dados - Sistema de Inventario de Pecas Automotivas (V1)
-// Principio fundamental: a quantidade de uma peca NUNCA e alterada diretamente.
-// Toda mudanca de estoque nasce de um registro em InventoryMovement, dentro
-// de uma transacao que tambem atualiza Part.quantity (ver movements.repository.ts).
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -41,21 +36,16 @@ enum MovementType {
   RETIRADA
 }
 
-// Permissoes granulares que sobrescrevem o padrao do Role para um usuario comum.
-// Fica em uma tabela separada (1-1) em vez de colunas soltas em User para deixar
-// facil adicionar novas permissoes no futuro sem migrar a tabela de usuarios toda vez.
 model UserPermission {
-  id              String  @id @default(uuid())
-  userId          String  @unique
-  user            User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  canCreateParts  Boolean @default(false)
-  canEditParts    Boolean @default(false)
-  canArchiveParts Boolean @default(false)
-  canStockIn      Boolean @default(false)
-  canStockOut     Boolean @default(false)
-  canManageUsers  Boolean @default(false)
-  // Permissoes do modulo de Produtos (almoxarifado/FIFO) - separadas das
-  // permissoes de Pecas de proposito, sao dois modulos independentes.
+  id                    String  @id @default(uuid())
+  userId                String  @unique
+  user                  User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  canCreateParts        Boolean @default(false)
+  canEditParts          Boolean @default(false)
+  canArchiveParts       Boolean @default(false)
+  canStockIn            Boolean @default(false)
+  canStockOut           Boolean @default(false)
+  canManageUsers        Boolean @default(false)
   canManageProducts     Boolean @default(false)
   canStockInProducts    Boolean @default(false)
   canStockOutProducts   Boolean @default(false)
@@ -75,10 +65,10 @@ model User {
   updatedAt    DateTime @updatedAt @map("updated_at")
 
   permission        UserPermission?
-  partsCreated      Part[]               @relation("PartCreatedBy")
-  movementsRecorded InventoryMovement[]  @relation("MovementUser")
-  productsCreated       Product[]               @relation("ProductCreatedBy")
-  productMovements      ProductMovement[]       @relation("ProductMovementUser")
+  partsCreated      Part[]              @relation("PartCreatedBy")
+  movementsRecorded InventoryMovement[] @relation("MovementUser")
+  productsCreated   Product[]           @relation("ProductCreatedBy")
+  productMovements  ProductMovement[]   @relation("ProductMovementUser")
   auditLogs         AuditLog[]
   refreshTokens     RefreshToken[]
 
@@ -86,16 +76,14 @@ model User {
   @@map("users")
 }
 
-// Refresh tokens sao guardados (com hash) para permitir revogacao/logout real,
-// em vez de confiar apenas na expiracao do JWT.
 model RefreshToken {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tokenHash String   @unique @map("token_hash")
-  expiresAt DateTime @map("expires_at")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
   revokedAt DateTime? @map("revoked_at")
-  createdAt DateTime @default(now()) @map("created_at")
+  createdAt DateTime  @default(now()) @map("created_at")
 
   @@index([userId])
   @@map("refresh_tokens")
@@ -117,19 +105,12 @@ model Part {
   photoUrl       String?       @map("photo_url")
   damagePhotoUrl String?       @map("damage_photo_url")
   name           String
-  // SKU agora e opcional e de texto livre (numeros, letras, qualquer
-  // formato). Quando nao informado, fica NULL - o Postgres permite varias
-  // linhas com sku NULL sem violar a restricao UNIQUE (NULL != NULL).
   sku            String?       @unique
   manufacturerId String        @map("manufacturer_id")
   manufacturer   Manufacturer  @relation(fields: [manufacturerId], references: [id], onDelete: Restrict)
-  // Campo mantido no banco por causa de pecas antigas ja cadastradas, mas
-  // deixou de ser pedido no formulario: a posicao agora vai dentro do nome.
   side           PartSide?     @map("side")
   condition      PartCondition @default(SEM_DANO)
   damageNotes    String?       @map("damage_notes")
-  // Quantidade atual. So pode ser alterada pelo movements.service dentro de
-  // uma transacao que tambem grava o InventoryMovement correspondente.
   quantity       Int           @default(0)
   inventoryDate  DateTime      @map("inventory_date") @db.Date
   createdById    String        @map("created_by")
@@ -149,21 +130,17 @@ model Part {
 }
 
 model InventoryMovement {
-  id              String       @id @default(uuid())
-  partId          String       @map("part_id")
-  // Cascade aqui e proposital: e a UNICA excecao no sistema em que apagar
-  // uma peca tambem apaga o historico dela. So e permitido excluir pecas
-  // ja arquivadas, e serve para limpar cadastros de teste (ver
-  // parts.service.ts deletePart) - nao para uso normal do dia a dia.
-  part            Part         @relation(fields: [partId], references: [id], onDelete: Cascade)
-  type            MovementType
-  quantity        Int
-  quantityBefore  Int          @map("quantity_before")
-  quantityAfter   Int          @map("quantity_after")
-  userId          String       @map("user_id")
-  user            User         @relation("MovementUser", fields: [userId], references: [id], onDelete: Restrict)
-  description     String?
-  createdAt       DateTime     @default(now()) @map("created_at")
+  id             String       @id @default(uuid())
+  partId         String       @map("part_id")
+  part           Part         @relation(fields: [partId], references: [id], onDelete: Cascade)
+  type           MovementType
+  quantity       Int
+  quantityBefore Int          @map("quantity_before")
+  quantityAfter  Int          @map("quantity_after")
+  userId         String       @map("user_id")
+  user           User         @relation("MovementUser", fields: [userId], references: [id], onDelete: Restrict)
+  description    String?
+  createdAt      DateTime     @default(now()) @map("created_at")
 
   @@index([partId])
   @@index([userId])
@@ -171,9 +148,6 @@ model InventoryMovement {
   @@map("inventory_movements")
 }
 
-// Trilha de auditoria de acoes sensiveis (criacao/edicao/arquivamento de peca,
-// movimentacoes, gestao de usuarios). Nao pode ser apagada por usuarios comuns
-// (ver audit.routes.ts - somente leitura, nenhuma rota de delete e exposta).
 model AuditLog {
   id        String   @id @default(uuid())
   userId    String?  @map("user_id")
@@ -190,38 +164,18 @@ model AuditLog {
   @@map("audit_logs")
 }
 
-// ============================================================================
-// MODULO DE PRODUTOS (almoxarifado com custeio FIFO) - separado do modulo de
-// Pecas. Migrado do sistema antigo (Node/Express/SQLite) para esta mesma
-// stack (Prisma/Postgres), preservando as regras de negocio dele:
-//   - Todo valor monetario e guardado em CENTAVOS (Int), nunca float, para
-//     nao acumular erro de arredondamento.
-//   - Toda ENTRADA vira um "lote" (ProductBatch) com seu proprio custo
-//     unitario e sua propria quantidade restante.
-//   - Toda SAIDA consome dos lotes mais antigos primeiro (FIFO), podendo
-//     consumir de varios lotes numa unica saida - por isso existe a tabela
-//     de ligacao ProductBatchConsumption.
-//   - Diferente do modulo de Pecas, aqui a EXCLUSAO de movimentacoes e
-//     permitida (a pedido do usuario) - ver products.service.ts para as
-//     regras que protegem a integridade do FIFO ao excluir.
-// ============================================================================
+// ===================== MODULO DE PRODUTOS (FIFO) =====================
 
 model Product {
-  id             String   @id @default(uuid())
-  name           String
-  // Fabricante e texto livre aqui (nao e uma tabela relacionada como em
-  // Manufacturer) - assim como no sistema antigo, que identificava o
-  // produto pela combinacao "item + fabricante" em texto simples.
-  manufacturer   String
-  // Quantidade atual = soma do saldo restante de todos os lotes. So e
-  // alterada pelo products.service.ts dentro de uma transacao que tambem
-  // grava lote e/ou movimentacao.
-  quantity       Int      @default(0)
-  createdById    String   @map("created_by")
-  createdBy      User     @relation("ProductCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
-  archivedAt     DateTime? @map("archived_at")
+  id           String    @id @default(uuid())
+  name         String
+  manufacturer String
+  quantity     Int       @default(0)
+  createdById  String    @map("created_by")
+  createdBy    User      @relation("ProductCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  archivedAt   DateTime? @map("archived_at")
 
   batches   ProductBatch[]
   movements ProductMovement[]
@@ -231,20 +185,16 @@ model Product {
   @@map("products")
 }
 
-// Um lote nasce de uma ENTRADA e carrega o custo unitario daquela compra
-// especifica. Saidas consomem lotes do mais antigo (createdAt) para o mais
-// novo - isso e o que torna o custeio "FIFO".
 model ProductBatch {
-  id                String   @id @default(uuid())
-  productId         String   @map("product_id")
-  product           Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  // Movimentacao de ENTRADA que criou este lote.
-  movementId        String   @unique @map("movement_id")
+  id                String          @id @default(uuid())
+  productId         String          @map("product_id")
+  product           Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  movementId        String          @unique @map("movement_id")
   movement          ProductMovement @relation("BatchOrigin", fields: [movementId], references: [id], onDelete: Cascade)
-  quantityOriginal  Int      @map("quantity_original")
-  quantityRemaining Int      @map("quantity_remaining")
-  unitCostCents     Int      @map("unit_cost_cents")
-  createdAt         DateTime @default(now()) @map("created_at")
+  quantityOriginal  Int             @map("quantity_original")
+  quantityRemaining Int             @map("quantity_remaining")
+  unitCostCents     Int             @map("unit_cost_cents")
+  createdAt         DateTime        @default(now()) @map("created_at")
 
   consumptions ProductBatchConsumption[]
 
@@ -259,13 +209,8 @@ model ProductMovement {
   product       Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
   type          MovementType
   quantity      Int
-  // ENTRADA: custo unitario informado no cadastro. SAIDA: fica null aqui -
-  // o custo de uma saida vem da soma dos lotes consumidos (ver totalCents).
   unitCostCents Int?         @map("unit_cost_cents")
-  // ENTRADA: quantity * unitCostCents. SAIDA: soma do custo dos lotes
-  // consumidos por essa saida (pode misturar lotes com precos diferentes).
   totalCents    Int          @map("total_cents")
-  // Preenchido so em saidas - de onde/quem retirou.
   setor         String?
   funcionario   String?
   description   String?
@@ -273,7 +218,7 @@ model ProductMovement {
   user          User         @relation("ProductMovementUser", fields: [userId], references: [id], onDelete: Restrict)
   createdAt     DateTime     @default(now()) @map("created_at")
 
-  originBatch ProductBatch?              @relation("BatchOrigin")
+  originBatch  ProductBatch?             @relation("BatchOrigin")
   consumptions ProductBatchConsumption[] @relation("MovementConsumption")
 
   @@index([productId])
@@ -284,20 +229,33 @@ model ProductMovement {
   @@map("product_movements")
 }
 
-// Liga uma SAIDA aos lotes que ela consumiu, e quanto consumiu de cada um.
-// Necessario porque uma unica saida pode "furar" varios lotes (FIFO), e
-// porque, se a saida for excluida, precisamos saber exatamente quanto
-// devolver para cada lote.
 model ProductBatchConsumption {
-  id                String   @id @default(uuid())
-  movementId        String   @map("movement_id")
-  movement          ProductMovement @relation("MovementConsumption", fields: [movementId], references: [id], onDelete: Cascade)
-  batchId           String   @map("batch_id")
-  batch             ProductBatch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
-  quantityConsumed  Int      @map("quantity_consumed")
-  unitCostCents     Int      @map("unit_cost_cents")
+  id               String          @id @default(uuid())
+  movementId       String          @map("movement_id")
+  movement         ProductMovement @relation("MovementConsumption", fields: [movementId], references: [id], onDelete: Cascade)
+  batchId          String          @map("batch_id")
+  batch            ProductBatch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  quantityConsumed Int             @map("quantity_consumed")
+  unitCostCents    Int             @map("unit_cost_cents")
 
   @@index([movementId])
   @@index([batchId])
   @@map("product_batch_consumptions")
+}
+
+// Listas usadas na retirada de produtos (gerenciadas pelo ADMIN).
+model ProductSector {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("product_sectors")
+}
+
+model ProductEmployee {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("product_employees")
 }
