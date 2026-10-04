@@ -20,7 +20,7 @@ export function QuickWithdrawalModal({ open, onClose, onSubmit }: QuickWithdrawa
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [productId, setProductId] = useState("");
-  const [quantity, setQuantity] = useState("1");
+  const [quantity, setQuantity] = useState("");
   const [setor, setSetor] = useState("");
   const [funcionario, setFuncionario] = useState("");
   const [description, setDescription] = useState("");
@@ -65,7 +65,7 @@ export function QuickWithdrawalModal({ open, onClose, onSubmit }: QuickWithdrawa
       await onSubmit(productId, parsedQuantity, setor.trim(), funcionario.trim(), description.trim() || undefined);
       setConfirming(false);
       setProductId("");
-      setQuantity("1");
+      setQuantity("");
       setSetor("");
       setFuncionario("");
       setDescription("");
@@ -114,6 +114,7 @@ export function QuickWithdrawalModal({ open, onClose, onSubmit }: QuickWithdrawa
             min={1}
             value={quantity}
             onChange={(e) => setQuantity(e.target.value)}
+            placeholder="0"
             className="mb-3 h-12 w-full rounded border border-line px-3 text-center text-lg font-semibold focus:border-accent"
           />
 
