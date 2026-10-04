@@ -20,6 +20,10 @@ import productListsRoutes from "@/modules/productlists/productlists.routes";
 
 export const app = express();
 
+// O Render coloca um proxy na frente da API. Sem isso, o limite de
+// requisicoes (rate limit) enxerga todos os usuarios como o mesmo IP.
+app.set("trust proxy", 1);
+
 // Headers de seguranca padrao (X-Content-Type-Options, HSTS, etc).
 app.use(helmet());
 
