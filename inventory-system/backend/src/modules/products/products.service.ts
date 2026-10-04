@@ -458,3 +458,27 @@ export async function getProductOutputByMonth() {
       .sort((a, b) => a.month.localeCompare(b.month)),
   }));
 }
+export async function updateMovementDate(movementId: string, date: string, userId: string) {
+  const movement = await movementsRepo.findById(movementId);
+  if (!movement) throw AppError.notFound("Movimentacao nao encontrada");
+  if (movement.type !== MovementType.ENTRADA) {
+    throw AppError.validation("So e possivel alterar a data de entradas");
+  }
+
+  // 12:00 UTC para a data nunca "virar" de dia por causa de fuso horario.
+  const newDate = new Date(`${date}T12:00:00.000Z`);
+
+  await prisma.$transaction(async (tx) => {
+    await tx.productMovement.update({ where: { id: movementId }, data: { createdAt: newDate } });
+    await tx.productBatch.updateMany({ where: { movementId }, data: { createdAt: newDate } });
+  });
+
+  await logAudit({
+    userId,
+    action: "UPDATE_PRODUCT_MOVEMENT_DATE",
+    entity: "ProductMovement",
+    entityId: movementId,
+    before: { createdAt: movement.createdAt },
+    after: { createdAt: newDate },
+  });
+}
