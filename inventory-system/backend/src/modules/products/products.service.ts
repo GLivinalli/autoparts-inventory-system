@@ -99,6 +99,7 @@ export async function getProductDetail(id: string, historyPage: Record<string, u
 
 export async function createProduct(input: CreateProductInput, userId: string) {
   const product = await prisma.$transaction(async (tx) => {
+    await assertNoDuplicateProduct(input.name, input.manufacturer);
     const created = await tx.product.create({
       data: {
         name: input.name,
@@ -154,6 +155,7 @@ export async function createProduct(input: CreateProductInput, userId: string) {
 export async function updateProduct(id: string, input: UpdateProductInput, userId: string) {
   const before = await repo.findById(id);
   if (!before) throw AppError.notFound("Produto nao encontrado");
+  await assertNoDuplicateProduct(input.name ?? before.name, input.manufacturer ?? before.manufacturer, id);
   const product = await repo.update(id, { name: input.name, manufacturer: input.manufacturer });
   await logAudit({
     userId,
