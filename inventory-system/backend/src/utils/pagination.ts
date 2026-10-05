@@ -11,7 +11,10 @@ export interface PaginatedResult<T> {
   totalPages: number;
 }
 
-const MAX_PAGE_SIZE = 100;
+// As listas de escolha (Cadastrar produto e Retirada) carregam todos os
+// produtos de uma vez. Com o limite antigo de 100, os produtos mais antigos
+// sumiam dessas listas.
+const MAX_PAGE_SIZE = 1000;
 const DEFAULT_PAGE_SIZE = 20;
 
 // Interpreta query params de forma defensiva: nunca deixa alguem pedir
