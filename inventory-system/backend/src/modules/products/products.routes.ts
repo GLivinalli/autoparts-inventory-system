@@ -13,6 +13,7 @@ import {
   listProductMovementsQuerySchema,
   consumptionReportQuerySchema,
   updateMovementDateSchema,
+  updateEntradaSchema,
 } from "./products.validation";
 
 const router = Router();
@@ -30,6 +31,12 @@ router.patch(
   requireRole(Role.ADMIN),
   validate(updateMovementDateSchema),
   controller.updateMovementDate
+);
+router.patch(
+  "/movements/:movementId",
+  requireRole(Role.ADMIN),
+  validate(updateEntradaSchema),
+  controller.updateEntrada
 );
 router.delete("/movements/:movementId", requirePermission("canDeleteProductMoves"), controller.deleteMovement);
 
