@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { asyncHandler } from "@/utils/asyncHandler";
 import { assertSectorAndEmployee } from "@/modules/productlists/productlists.service";
 import * as service from "./products.service";
+import * as adjustments from "./products.adjustments.service";
 
 export const list = asyncHandler(async (req: Request, res: Response) => {
   const result = await service.listProducts(req.query as never);
@@ -51,6 +52,11 @@ export const deleteMovement = asyncHandler(async (req: Request, res: Response) =
 
 export const updateMovementDate = asyncHandler(async (req: Request, res: Response) => {
   await service.updateMovementDate(req.params.movementId, req.body.date, req.user!.id);
+  res.status(204).send();
+});
+
+export const updateEntrada = asyncHandler(async (req: Request, res: Response) => {
+  await adjustments.updateEntrada(req.params.movementId, req.body, req.user!.id);
   res.status(204).send();
 });
 
