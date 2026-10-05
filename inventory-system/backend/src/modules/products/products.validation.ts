@@ -69,6 +69,11 @@ export const updateMovementDateSchema = z.object({
     .refine((v) => v <= new Date().toISOString().slice(0, 10), "A data nao pode ser no futuro"),
 });
 
+export const updateEntradaSchema = z.object({
+  quantity: z.coerce.number().int().positive("Quantidade deve ser maior que zero"),
+  totalValueReais: z.coerce.number().nonnegative("Valor nao pode ser negativo"),
+});
+
 export type CreateProductInput = z.infer<typeof createProductSchema>;
 export type UpdateProductInput = z.infer<typeof updateProductSchema>;
 export type ListProductsQuery = z.infer<typeof listProductsQuerySchema>;
