@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import type { Product } from "@/types";
+import { SearchableSelect, SelectOption } from "@/components/common/SearchableSelect";
 import { getApiErrorMessage } from "@/api/client";
 import * as productsApi from "@/api/products";
 import { onlyDigits, sanitizeMoney } from "@/utils/inputs";
@@ -65,6 +66,11 @@ export function ProductForm({ open, editingProduct, onClose, onSubmit }: Product
 
   const isExisting = !!values.existingProductId;
   const selectValue = values.existingProductId || (values.name ? NEW_OPTION : "");
+
+  const productOptions: SelectOption[] = [
+    ...(values.name && !isExisting ? [{ value: NEW_OPTION, label: `${values.name} (novo)` }] : []),
+    ...products.map((p) => ({ value: p.id, label: `${p.name} - ${p.manufacturer}` })),
+  ];
 
   function handleRequestClose() {
     const isDirty = JSON.stringify(values) !== initialSnapshotRef.current;
@@ -174,19 +180,7 @@ export function ProductForm({ open, editingProduct, onClose, onSubmit }: Product
           ) : (
             <div>
               <label className="mb-1 block text-sm font-medium text-ink">Nome do produto</label>
-              <select
-                value={selectValue}
-                onChange={(e) => handleSelectChange(e.target.value)}
-                className="h-11 w-full rounded border border-line bg-white px-3 text-sm focus:border-accent"
-              >
-                <option value="">Selecione</option>
-                {values.name && !isExisting && <option value={NEW_OPTION}>{values.name} (novo)</option>}
-                {products.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} - {p.manufacturer}
-                  </option>
-                ))}
-              </select>
+              <SearchableSelect options={productOptions} value={selectValue} onChange={handleSelectChange} />
               <div className="mt-2 flex gap-2">
                 <input
                   value={newName}
