@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Product } from "@/types";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { SearchableSelect } from "@/components/common/SearchableSelect";
 import { ManageListsModal } from "@/components/products/ManageListsModal";
 import { useAuth } from "@/context/AuthContext";
 import { getApiErrorMessage } from "@/api/client";
@@ -67,6 +68,11 @@ export function QuickWithdrawalModal({ open, onClose, onSubmit }: QuickWithdrawa
   const parsedQuantity = Number(quantity);
   const projected = selectedProduct ? selectedProduct.quantity - parsedQuantity : null;
 
+  const productOptions = products.map((p) => ({
+    value: p.id,
+    label: `${p.name} - ${p.manufacturer} (estoque: ${p.quantity})`,
+  }));
+
   function validate(): string | null {
     if (!productId) return "Selecione um produto";
     if (!Number.isInteger(parsedQuantity) || parsedQuantity <= 0) return "Informe uma quantidade valida";
@@ -119,19 +125,14 @@ export function QuickWithdrawalModal({ open, onClose, onSubmit }: QuickWithdrawa
           </div>
 
           <label className="mb-1 block text-sm font-medium text-ink">Produto</label>
-          <select
+          <SearchableSelect
+            className="mb-1"
+            options={productOptions}
             value={productId}
-            onChange={(e) => setProductId(e.target.value)}
+            onChange={setProductId}
             disabled={loadingProducts}
-            className="mb-1 h-11 w-full rounded border border-line bg-white px-3 text-sm focus:border-accent"
-          >
-            <option value="">{loadingProducts ? "Carregando..." : "Selecione"}</option>
-            {products.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name} - {p.manufacturer} (estoque: {p.quantity})
-              </option>
-            ))}
-          </select>
+            placeholder={loadingProducts ? "Carregando..." : "Selecione"}
+          />
           {selectedProduct && (
             <p className="mb-3 text-xs text-muted">Estoque atual: {selectedProduct.quantity} unidades</p>
           )}
