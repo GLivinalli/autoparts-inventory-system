@@ -9,6 +9,7 @@ import { useToast } from "@/context/ToastContext";
 import * as productsApi from "@/api/products";
 import { getApiErrorMessage } from "@/api/client";
 import { formatCentsToBRL, formatDateTime } from "@/utils/labels";
+import { onlyDigits, sanitizeMoney } from "@/utils/inputs";
 
 interface ProductDetailModalProps {
   productId: string;
@@ -37,6 +38,11 @@ export function ProductDetailModal({ productId, onClose, onEdit, onChanged, refr
   const [editingDateMovement, setEditingDateMovement] = useState<ProductMovement | null>(null);
   const [newDate, setNewDate] = useState("");
   const [savingDate, setSavingDate] = useState(false);
+  const [editingEntry, setEditingEntry] = useState<ProductMovement | null>(null);
+  const [editQuantity, setEditQuantity] = useState("");
+  const [editValue, setEditValue] = useState("");
+  const [entryError, setEntryError] = useState<string | null>(null);
+  const [savingEntry, setSavingEntry] = useState(false);
 
   const today = new Date().toISOString().slice(0, 10);
 
@@ -110,6 +116,34 @@ export function ProductDetailModal({ productId, onClose, onEdit, onChanged, refr
       notify(getApiErrorMessage(err, "Nao foi possivel alterar a data"), "error");
     } finally {
       setSavingDate(false);
+    }
+  }
+
+  function openEntryEditor(movement: ProductMovement) {
+    setEditingEntry(movement);
+    setEditQuantity(String(movement.quantity));
+    setEditValue((movement.totalCents / 100).toFixed(2).replace(".", ","));
+    setEntryError(null);
+  }
+
+  async function handleSaveEntry() {
+    if (!editingEntry) return;
+    const quantity = Number(editQuantity);
+    const value = Number(editValue.replace(",", "."));
+    if (!Number.isInteger(quantity) || quantity <= 0) return setEntryError("Informe uma quantidade valida");
+    if (!editValue.trim() || Number.isNaN(value) || value < 0) return setEntryError("Informe um valor total valido");
+
+    setSavingEntry(true);
+    setEntryError(null);
+    try {
+      await productsApi.updateEntrada(editingEntry.id, quantity, value);
+      notify("Entrada atualizada", "success");
+      setEditingEntry(null);
+      onChanged();
+    } catch (err) {
+      setEntryError(getApiErrorMessage(err, "Nao foi possivel salvar a entrada"));
+    } finally {
+      setSavingEntry(false);
     }
   }
 
@@ -238,6 +272,19 @@ export function ProductDetailModal({ productId, onClose, onEdit, onChanged, refr
                       </div>
                       {isAdmin && m.type === "ENTRADA" && (
                         <button
+                          onClick={() => openEntryEditor(m)}
+                          className="rounded p-1.5 text-muted hover:bg-steel-soft hover:text-steel"
+                          aria-label="Editar quantidade e valor da entrada"
+                          title="Editar quantidade e valor"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M12 20h9" />
+                            <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                          </svg>
+                        </button>
+                      )}
+                      {isAdmin && m.type === "ENTRADA" && (
+                        <button
                           onClick={() => openDateEditor(m)}
                           className="rounded p-1.5 text-muted hover:bg-steel-soft hover:text-steel"
                           aria-label="Alterar data da entrada"
@@ -269,6 +316,59 @@ export function ProductDetailModal({ productId, onClose, onEdit, onChanged, refr
           </div>
         )}
       </div>
+
+      {editingEntry && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 p-0 sm:items-center sm:p-4">
+          <div className="w-full max-w-sm rounded-t-md bg-white p-5 shadow-lg sm:rounded-md">
+            <h3 className="font-display text-xl font-semibold text-ink">Editar entrada</h3>
+            <p className="mt-1 text-sm text-muted">
+              Corrige a quantidade e o valor total pago desta entrada. O estoque e o custo por unidade sao
+              recalculados, e as retiradas ja feitas desse lote passam a usar o custo corrigido. A quantidade nao pode
+              ser menor que a ja retirada.
+            </p>
+
+            <label className="mb-1 mt-4 block text-sm font-medium text-ink">Quantidade</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={editQuantity}
+              onChange={(e) => setEditQuantity(onlyDigits(e.target.value))}
+              placeholder="0"
+              className="mb-3 h-11 w-full rounded border border-line px-3 text-sm placeholder:text-muted focus:border-accent"
+            />
+
+            <label className="mb-1 block text-sm font-medium text-ink">Valor total pago (R$)</label>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={editValue}
+              onChange={(e) => setEditValue(sanitizeMoney(e.target.value))}
+              placeholder="0,00"
+              className="h-11 w-full rounded border border-line px-3 text-sm placeholder:text-muted focus:border-accent"
+            />
+
+            {entryError && <p className="mt-2 text-sm text-danger">{entryError}</p>}
+
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setEditingEntry(null)}
+                className="rounded px-4 py-2.5 text-sm font-medium text-muted hover:bg-surface"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveEntry}
+                disabled={savingEntry}
+                className="rounded bg-accent px-5 py-2.5 text-sm font-semibold text-white hover:bg-accent-dark disabled:opacity-60"
+              >
+                {savingEntry ? "Salvando..." : "Salvar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {editingDateMovement && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 p-0 sm:items-center sm:p-4">
