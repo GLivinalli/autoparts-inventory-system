@@ -94,6 +94,15 @@ export async function deleteMovement(movementId: string) {
   await api.delete(`/products/movements/${movementId}`);
 }
 
+export async function updateMovementDate(movementId: string, date: string) {
+  await api.patch(`/products/movements/${movementId}/date`, { date });
+}
+
+// Somente administrador: corrige quantidade e valor total de uma entrada.
+export async function updateEntrada(movementId: string, quantity: number, totalValueReais: number) {
+  await api.patch(`/products/movements/${movementId}`, { quantity, totalValueReais });
+}
+
 export async function listMovements(params: {
   page?: number;
   productId?: string;
@@ -118,7 +127,4 @@ export async function getMonthlyBalance() {
 export async function getOutputByMonth() {
   const { data } = await api.get<{ items: ProductOutputByMonth[] }>("/products/reports/output-by-month");
   return data.items;
-}
-export async function updateMovementDate(movementId: string, date: string) {
-  await api.patch(`/products/movements/${movementId}/date`, { date });
 }
