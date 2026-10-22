@@ -1,4 +1,4 @@
-# AutoParts Inventario — V1
+# AutoParts Inventario
 
 Sistema web de controle de inventario de pecas automotivas de reposicao.
 Backend em Node.js/TypeScript + PostgreSQL, frontend em React/TypeScript,
