@@ -13,7 +13,10 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { useDebounce } from "@/hooks/useDebounce";
 import * as productsApi from "@/api/products";
+import { getStockSummary } from "@/api/productStock";
+import type { StockSummary } from "@/api/productStock";
 import { getApiErrorMessage } from "@/api/client";
+import { formatCentsToBRL } from "@/utils/labels";
 
 const actionButtonClass =
   "rounded border border-line bg-white px-4 py-2.5 text-sm font-medium text-ink hover:bg-surface";
@@ -31,6 +34,7 @@ export function ProductsList() {
   const [products, setProducts] = useState<Product[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [summary, setSummary] = useState<StockSummary | null>(null);
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -54,11 +58,19 @@ export function ProductsList() {
       .finally(() => setLoading(false));
   }
 
+  function loadSummary() {
+    getStockSummary(viewArchived)
+      .then(setSummary)
+      .catch(() => undefined);
+  }
+
   useEffect(fetchProducts, [page, debouncedSearch, viewArchived]);
+  useEffect(loadSummary, [viewArchived]);
 
   function refreshList() {
     setDetailRefreshKey((k) => k + 1);
     fetchProducts();
+    loadSummary();
   }
 
   async function handleCreateOrUpdate(values: ProductFormValues) {
@@ -141,6 +153,20 @@ export function ProductsList() {
           {viewArchived ? "Ver produtos ativos" : "Ver produtos arquivados"}
         </button>
       </div>
+
+      {summary && (
+        <div className="mt-3 inline-flex flex-col rounded border border-line bg-white px-4 py-3">
+          <span className="text-xs text-muted">
+            {viewArchived ? "Valor total dos arquivados" : "Valor total em estoque"}
+          </span>
+          <span className="font-display text-2xl font-semibold text-ink">
+            {formatCentsToBRL(summary.totalValueCents)}
+          </span>
+          <span className="text-xs text-muted">
+            {summary.totalUnits} unidades em {summary.productCount} produtos
+          </span>
+        </div>
+      )}
 
       <div className="my-4">
         <SearchBar value={search} onChange={setSearch} placeholder="Buscar por nome ou fabricante" />
