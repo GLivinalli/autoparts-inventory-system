@@ -9,3 +9,14 @@ export async function listAllProductMovements() {
   });
   return data;
 }
+
+export interface EditMovementPayload {
+  date?: string;
+  quantity?: number;
+  funcionario?: string;
+}
+
+// Somente administrador. Manda so os campos que mudaram.
+export async function editMovement(movementId: string, payload: EditMovementPayload) {
+  await api.patch(`/products/movements/${movementId}/edit`, payload);
+}
