@@ -1,89 +1,107 @@
 import { useEffect, useMemo, useState } from "react";
 import { NavLink } from "react-router-dom";
-import type { ConsumptionReportRow, MonthlyBalanceRow, ProductOutputByMonth } from "@/types";
+import type { ProductMovement } from "@/types";
 import { Spinner } from "@/components/common/Spinner";
-import * as productsApi from "@/api/products";
+import { useToast } from "@/context/ToastContext";
+import { getApiErrorMessage } from "@/api/client";
+import { listAllProductMovements } from "@/api/productReport";
 import { formatCentsToBRL } from "@/utils/labels";
+import { onlyDigits, sanitizeMoney } from "@/utils/inputs";
 
 const actionButtonClass =
   "rounded border border-line bg-white px-4 py-2.5 text-sm font-medium text-ink hover:bg-surface";
 const activeTabClass = "rounded bg-ink px-4 py-2.5 text-sm font-medium text-white";
+const filterClass = "h-8 w-full rounded border border-line bg-white px-2 text-xs focus:border-accent";
 
 const MONTH_NAMES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
-function formatMonth(month: string) {
-  const [year, m] = month.split("-");
-  return `${MONTH_NAMES[Number(m) - 1]}/${year}`;
+type TypeFilter = "" | "ENTRADA" | "RETIRADA";
+
+// Mes (AAAA-MM) no fuso do usuario, para o filtro nao "virar" de mes por
+// causa do horario.
+function monthKey(iso: string) {
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
-type PeriodType = "all" | "month" | "year";
+function formatMonthKey(key: string) {
+  const [year, month] = key.split("-");
+  return `${MONTH_NAMES[Number(month) - 1]}/${year}`;
+}
+
+// Ignora acentos e maiusculas/minusculas na busca por produto.
+function normalize(text: string) {
+  return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+}
+
+function sum(list: ProductMovement[], pick: (m: ProductMovement) => number) {
+  return list.reduce((acc, m) => acc + pick(m), 0);
+}
 
 export function ProductReports() {
-  const [consumption, setConsumption] = useState<ConsumptionReportRow[]>([]);
-  const [balance, setBalance] = useState<MonthlyBalanceRow[]>([]);
-  const [output, setOutput] = useState<ProductOutputByMonth[]>([]);
-  const [loadingConsumption, setLoadingConsumption] = useState(true);
-  const [loadingBalance, setLoadingBalance] = useState(true);
-  const [loadingOutput, setLoadingOutput] = useState(true);
-  const [setorFilter, setSetorFilter] = useState("");
-  const [funcionarioFilter, setFuncionarioFilter] = useState("");
+  const { notify } = useToast();
+  const [movements, setMovements] = useState<ProductMovement[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const [periodType, setPeriodType] = useState<PeriodType>("all");
-  const [periodMonth, setPeriodMonth] = useState(new Date().toISOString().slice(0, 7));
-  const [periodYear, setPeriodYear] = useState(String(new Date().getFullYear()));
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>("");
+  const [monthFilter, setMonthFilter] = useState("");
+  const [sectorFilter, setSectorFilter] = useState("");
+  const [employeeFilter, setEmployeeFilter] = useState("");
+  const [productFilter, setProductFilter] = useState("");
+  const [minQuantity, setMinQuantity] = useState("");
+  const [minValue, setMinValue] = useState("");
 
   useEffect(() => {
-    productsApi.getMonthlyBalance().then(setBalance).finally(() => setLoadingBalance(false));
-    productsApi.getOutputByMonth().then(setOutput).finally(() => setLoadingOutput(false));
+    listAllProductMovements()
+      .then((data) => setMovements(data.items))
+      .catch((err) => notify(getApiErrorMessage(err), "error"))
+      .finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => {
-    setLoadingConsumption(true);
-    productsApi
-      .getConsumptionReport({ setor: setorFilter || undefined, funcionario: funcionarioFilter || undefined })
-      .then(setConsumption)
-      .finally(() => setLoadingConsumption(false));
-  }, [setorFilter, funcionarioFilter]);
+  const months = useMemo(
+    () => Array.from(new Set(movements.map((m) => monthKey(m.createdAt)))).sort().reverse(),
+    [movements]
+  );
+  const sectors = useMemo(
+    () => Array.from(new Set(movements.map((m) => m.setor).filter((s): s is string => !!s))).sort(),
+    [movements]
+  );
+  const employees = useMemo(
+    () => Array.from(new Set(movements.map((m) => m.funcionario).filter((s): s is string => !!s))).sort(),
+    [movements]
+  );
 
-  function monthInPeriod(month: string) {
-    if (periodType === "month") return month === periodMonth;
-    if (periodType === "year") return month.startsWith(periodYear);
-    return true;
+  const rows = useMemo(() => {
+    const words = normalize(productFilter).split(/\s+/).filter(Boolean);
+    const quantity = parseInt(minQuantity) || 0;
+    const valueCents = Math.round((parseFloat(minValue.replace(",", ".")) || 0) * 100);
+
+    return movements.filter(
+      (m) =>
+        (!typeFilter || m.type === typeFilter) &&
+        (!monthFilter || monthKey(m.createdAt) === monthFilter) &&
+        (!sectorFilter || m.setor === sectorFilter) &&
+        (!employeeFilter || m.funcionario === employeeFilter) &&
+        words.every((w) => normalize(m.product?.name ?? "").includes(w)) &&
+        m.quantity >= quantity &&
+        m.totalCents >= valueCents
+    );
+  }, [movements, typeFilter, monthFilter, sectorFilter, employeeFilter, productFilter, minQuantity, minValue]);
+
+  const entries = rows.filter((m) => m.type === "ENTRADA");
+  const exits = rows.filter((m) => m.type === "RETIRADA");
+
+  function clearFilters() {
+    setTypeFilter("");
+    setMonthFilter("");
+    setSectorFilter("");
+    setEmployeeFilter("");
+    setProductFilter("");
+    setMinQuantity("");
+    setMinValue("");
   }
 
-  const periodLabel =
-    periodType === "month" ? formatMonth(periodMonth) : periodType === "year" ? periodYear : "Todo o periodo";
-
-  const filteredBalance = useMemo(() => balance.filter((r) => monthInPeriod(r.month)), [balance, periodType, periodMonth, periodYear]);
-
-  const valuesTotals = useMemo(() => {
-    const totalCompra = filteredBalance.reduce((sum, r) => sum + r.entradasCents, 0);
-    const totalGasto = filteredBalance.reduce((sum, r) => sum + r.saidasCents, 0);
-    return { totalCompra, totalGasto };
-  }, [filteredBalance]);
-
-  const itemsSummary = useMemo(() => {
-    return output
-      .map((product) => {
-        const monthsInPeriod = product.months.filter((m) => monthInPeriod(m.month));
-        if (monthsInPeriod.length === 0) return null;
-        const totalQuantity = monthsInPeriod.reduce((sum, m) => sum + m.quantity, 0);
-        const totalCents = monthsInPeriod.reduce((sum, m) => sum + m.totalCents, 0);
-        const averageQuantity = totalQuantity / monthsInPeriod.length;
-        return {
-          productId: product.productId,
-          productName: product.productName,
-          averageQuantity,
-          totalCents,
-        };
-      })
-      .filter((row): row is NonNullable<typeof row> => row !== null);
-  }, [output, periodType, periodMonth, periodYear]);
-
-  const filteredConsumption = useMemo(
-    () => consumption.filter((r) => monthInPeriod(r.month)),
-    [consumption, periodType, periodMonth, periodYear]
-  );
+  const dash = <span className="text-muted">—</span>;
 
   return (
     <div>
@@ -97,187 +115,168 @@ export function ProductReports() {
       </div>
 
       <h1 className="font-display text-3xl font-semibold text-ink">Relatorios</h1>
-      <p className="mb-4 text-sm text-muted">Valores, resumo de itens e consumo por setor/funcionario</p>
+      <p className="mb-4 text-sm text-muted">Todas as entradas e retiradas em uma tabela, com filtro em cada coluna</p>
 
-      <div className="mb-6 flex flex-wrap items-center gap-2 rounded border border-line bg-white p-3">
-        <span className="text-sm font-medium text-ink">Periodo:</span>
-        <select
-          value={periodType}
-          onChange={(e) => setPeriodType(e.target.value as PeriodType)}
-          className="h-10 rounded border border-line bg-white px-3 text-sm focus:border-accent"
-        >
-          <option value="all">Todo o periodo</option>
-          <option value="month">Um mes especifico</option>
-          <option value="year">Um ano especifico</option>
-        </select>
-        {periodType === "month" && (
-          <input
-            type="month"
-            value={periodMonth}
-            onChange={(e) => setPeriodMonth(e.target.value)}
-            className="h-10 rounded border border-line bg-white px-3 text-sm focus:border-accent"
-          />
-        )}
-        {periodType === "year" && (
-          <input
-            type="number"
-            value={periodYear}
-            onChange={(e) => setPeriodYear(e.target.value)}
-            className="h-10 w-28 rounded border border-line bg-white px-3 text-sm focus:border-accent"
-          />
-        )}
-      </div>
-
-      <section className="mb-8">
-        <h2 className="mb-2 font-display text-xl font-semibold text-ink">Valores</h2>
-
-        {loadingBalance ? (
-          <div className="flex justify-center py-10">
-            <Spinner />
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-3 sm:max-w-md">
-            <div className="rounded border border-line bg-white p-4">
-              <p className="text-xs text-muted">Valor total de compra</p>
-              <p className="mt-1 font-display text-2xl font-semibold text-success">
-                {formatCentsToBRL(valuesTotals.totalCompra)}
-              </p>
-            </div>
-            <div className="rounded border border-line bg-white p-4">
-              <p className="text-xs text-muted">Valor total de gasto</p>
-              <p className="mt-1 font-display text-2xl font-semibold text-danger">
-                {formatCentsToBRL(valuesTotals.totalGasto)}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {!loadingBalance && filteredBalance.length > 0 && (
-          <div className="mt-4 overflow-x-auto rounded border border-line bg-white">
-            <table className="w-full min-w-[480px] text-sm">
-              <thead>
-                <tr className="text-left text-xs uppercase tracking-wide text-muted">
-                  <th className="border-b border-line px-3 py-2.5 font-medium">Mes</th>
-                  <th className="border-b border-line px-3 py-2.5 text-right font-medium">Entradas</th>
-                  <th className="border-b border-line px-3 py-2.5 text-right font-medium">Saidas</th>
-                  <th className="border-b border-line px-3 py-2.5 text-right font-medium">Saldo</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredBalance.map((row) => (
-                  <tr key={row.month}>
-                    <td className="border-b border-line px-3 py-2.5 font-medium text-ink">{formatMonth(row.month)}</td>
-                    <td className="border-b border-line px-3 py-2.5 text-right text-success">
-                      {formatCentsToBRL(row.entradasCents)}
-                    </td>
-                    <td className="border-b border-line px-3 py-2.5 text-right text-danger">
-                      {formatCentsToBRL(row.saidasCents)}
-                    </td>
-                    <td className="border-b border-line px-3 py-2.5 text-right font-semibold text-ink">
-                      {formatCentsToBRL(row.saldoCents)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-
-      <section className="mb-8">
-        <h2 className="mb-2 font-display text-xl font-semibold text-ink">Resumo de Itens</h2>
-
-        {loadingOutput ? (
-          <div className="flex justify-center py-10">
-            <Spinner />
-          </div>
-        ) : itemsSummary.length === 0 ? (
-          <p className="text-sm text-muted">Nenhuma saida registrada nesse periodo.</p>
-        ) : (
-          <div className="overflow-x-auto rounded border border-line bg-white">
-            <table className="w-full min-w-[480px] text-sm">
-              <thead>
-                <tr className="text-left text-xs uppercase tracking-wide text-muted">
-                  <th className="border-b border-line px-3 py-2.5 font-medium">Mes</th>
-                  <th className="border-b border-line px-3 py-2.5 font-medium">Produto</th>
-                  <th className="border-b border-line px-3 py-2.5 text-right font-medium">Quantidade</th>
-                  <th className="border-b border-line px-3 py-2.5 text-right font-medium">Valor</th>
-                </tr>
-              </thead>
-              <tbody>
-                {itemsSummary.map((row) => (
-                  <tr key={row.productId}>
-                    <td className="border-b border-line px-3 py-2.5 text-ink-soft">{periodLabel}</td>
-                    <td className="border-b border-line px-3 py-2.5 font-medium text-ink">{row.productName}</td>
-                    <td className="border-b border-line px-3 py-2.5 text-right text-ink">
-                      {row.averageQuantity.toFixed(1)}
-                    </td>
-                    <td className="border-b border-line px-3 py-2.5 text-right text-ink">
-                      {formatCentsToBRL(row.totalCents)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-
-      <section>
-        <h2 className="mb-2 font-display text-xl font-semibold text-ink">Consumo por setor/funcionario</h2>
-
-        <div className="mb-3 flex flex-wrap gap-2">
-          <input
-            value={setorFilter}
-            onChange={(e) => setSetorFilter(e.target.value)}
-            placeholder="Filtrar por setor"
-            className="h-10 rounded border border-line bg-white px-3 text-sm focus:border-accent"
-          />
-          <input
-            value={funcionarioFilter}
-            onChange={(e) => setFuncionarioFilter(e.target.value)}
-            placeholder="Filtrar por funcionario"
-            className="h-10 rounded border border-line bg-white px-3 text-sm focus:border-accent"
-          />
+      {loading ? (
+        <div className="flex justify-center py-16">
+          <Spinner />
         </div>
-
-        {loadingConsumption ? (
-          <div className="flex justify-center py-10">
-            <Spinner />
+      ) : movements.length === 0 ? (
+        <div className="rounded border border-dashed border-line bg-white py-16 text-center">
+          <p className="text-sm text-muted">Nenhuma movimentacao registrada ainda.</p>
+        </div>
+      ) : (
+        <div className="rounded-md bg-surface-1 p-3">
+          <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-3">
+              <select
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value as TypeFilter)}
+                className="h-8 rounded border border-line bg-white px-2 text-sm focus:border-accent"
+              >
+                <option value="">Entradas e retiradas</option>
+                <option value="ENTRADA">So entradas</option>
+                <option value="RETIRADA">So retiradas</option>
+              </select>
+              <span className="text-sm text-muted">
+                {rows.length} de {movements.length} registros
+              </span>
+            </div>
+            <button type="button" onClick={clearFilters} className={`${actionButtonClass} !py-1.5`}>
+              Limpar filtros
+            </button>
           </div>
-        ) : filteredConsumption.length === 0 ? (
-          <p className="text-sm text-muted">Nenhum consumo encontrado nesse periodo/filtros.</p>
-        ) : (
+
           <div className="overflow-x-auto rounded border border-line bg-white">
-            <table className="w-full min-w-[640px] text-sm">
+            <table className="w-full min-w-[760px] table-fixed border-collapse text-sm">
+              <colgroup>
+                <col style={{ width: "104px" }} />
+                <col style={{ width: "112px" }} />
+                <col style={{ width: "120px" }} />
+                <col />
+                <col style={{ width: "92px" }} />
+                <col style={{ width: "108px" }} />
+              </colgroup>
               <thead>
-                <tr className="text-left text-xs uppercase tracking-wide text-muted">
-                  <th className="border-b border-line px-3 py-2.5 font-medium">Mes</th>
-                  <th className="border-b border-line px-3 py-2.5 font-medium">Setor</th>
-                  <th className="border-b border-line px-3 py-2.5 font-medium">Funcionario</th>
-                  <th className="border-b border-line px-3 py-2.5 font-medium">Produto</th>
-                  <th className="border-b border-line px-3 py-2.5 text-right font-medium">Qtd.</th>
-                  <th className="border-b border-line px-3 py-2.5 text-right font-medium">Valor</th>
+                <tr className="text-left text-xs font-medium text-muted">
+                  <th className="px-2 pb-1 pt-2.5 font-medium">Data</th>
+                  <th className="px-2 pb-1 pt-2.5 font-medium">Setor</th>
+                  <th className="px-2 pb-1 pt-2.5 font-medium">Funcionario</th>
+                  <th className="px-2 pb-1 pt-2.5 font-medium">Produto</th>
+                  <th className="px-2 pb-1 pt-2.5 text-right font-medium">Quantidade</th>
+                  <th className="px-2 pb-1 pt-2.5 text-right font-medium">Valor</th>
+                </tr>
+                <tr>
+                  <td className="px-2 pb-2">
+                    <select value={monthFilter} onChange={(e) => setMonthFilter(e.target.value)} className={filterClass}>
+                      <option value="">Todas</option>
+                      {months.map((m) => (
+                        <option key={m} value={m}>
+                          {formatMonthKey(m)}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="px-2 pb-2">
+                    <select value={sectorFilter} onChange={(e) => setSectorFilter(e.target.value)} className={filterClass}>
+                      <option value="">Todos</option>
+                      {sectors.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="px-2 pb-2">
+                    <select
+                      value={employeeFilter}
+                      onChange={(e) => setEmployeeFilter(e.target.value)}
+                      className={filterClass}
+                    >
+                      <option value="">Todos</option>
+                      {employees.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="px-2 pb-2">
+                    <input
+                      value={productFilter}
+                      onChange={(e) => setProductFilter(e.target.value)}
+                      placeholder="Buscar produto"
+                      className={filterClass}
+                    />
+                  </td>
+                  <td className="px-2 pb-2">
+                    <input
+                      inputMode="numeric"
+                      value={minQuantity}
+                      onChange={(e) => setMinQuantity(onlyDigits(e.target.value))}
+                      placeholder="min."
+                      className={filterClass}
+                    />
+                  </td>
+                  <td className="px-2 pb-2">
+                    <input
+                      inputMode="decimal"
+                      value={minValue}
+                      onChange={(e) => setMinValue(sanitizeMoney(e.target.value))}
+                      placeholder="min. R$"
+                      className={filterClass}
+                    />
+                  </td>
                 </tr>
               </thead>
               <tbody>
-                {filteredConsumption.map((row) => (
-                  <tr key={`${row.month}-${row.setor}-${row.funcionario}-${row.productId}`}>
-                    <td className="border-b border-line px-3 py-2.5 text-ink-soft">{formatMonth(row.month)}</td>
-                    <td className="border-b border-line px-3 py-2.5 text-ink-soft">{row.setor}</td>
-                    <td className="border-b border-line px-3 py-2.5 text-ink-soft">{row.funcionario}</td>
-                    <td className="border-b border-line px-3 py-2.5 font-medium text-ink">{row.productName}</td>
-                    <td className="border-b border-line px-3 py-2.5 text-right text-ink">{row.quantity}</td>
-                    <td className="border-b border-line px-3 py-2.5 text-right text-ink">
-                      {formatCentsToBRL(row.totalCents)}
+                {rows.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="border-t border-line px-2 py-6 text-center text-muted">
+                      Nada encontrado com esses filtros.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  rows.map((m) => (
+                    <tr key={m.id} className="border-t border-line">
+                      <td className="px-2 py-2 align-top text-ink-soft">
+                        {new Date(m.createdAt).toLocaleDateString("pt-BR")}
+                      </td>
+                      <td className="px-2 py-2 align-top text-ink-soft">{m.setor || dash}</td>
+                      <td className="px-2 py-2 align-top text-ink-soft">{m.funcionario || dash}</td>
+                      <td className="px-2 py-2 align-top font-medium text-ink">{m.product?.name ?? "-"}</td>
+                      <td className="px-2 py-2 text-right align-top font-medium">
+                        {m.type === "ENTRADA" ? (
+                          <span className="text-success">+{m.quantity}</span>
+                        ) : (
+                          <span className="text-danger">−{m.quantity}</span>
+                        )}
+                      </td>
+                      <td className="px-2 py-2 text-right align-top text-ink">{formatCentsToBRL(m.totalCents)}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
+              <tfoot className="bg-surface-1">
+                <tr className="border-t border-line font-medium">
+                  <td colSpan={4} className="px-2 py-2 text-ink">
+                    Entradas · {entries.length} registros
+                  </td>
+                  <td className="px-2 py-2 text-right text-success">+{sum(entries, (m) => m.quantity)}</td>
+                  <td className="px-2 py-2 text-right text-ink">{formatCentsToBRL(sum(entries, (m) => m.totalCents))}</td>
+                </tr>
+                <tr className="border-t border-line font-medium">
+                  <td colSpan={4} className="px-2 py-2 text-ink">
+                    Retiradas · {exits.length} registros
+                  </td>
+                  <td className="px-2 py-2 text-right text-danger">−{sum(exits, (m) => m.quantity)}</td>
+                  <td className="px-2 py-2 text-right text-ink">{formatCentsToBRL(sum(exits, (m) => m.totalCents))}</td>
+                </tr>
+              </tfoot>
             </table>
           </div>
-        )}
-      </section>
+        </div>
+      )}
     </div>
   );
 }
