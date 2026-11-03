@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { NavLink } from "react-router-dom";
 import type { ProductMovement } from "@/types";
 import { Spinner } from "@/components/common/Spinner";
+import { EditMovementModal } from "@/components/products/EditMovementModal";
+import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { getApiErrorMessage } from "@/api/client";
 import { listAllProductMovements } from "@/api/productReport";
@@ -38,10 +40,18 @@ function sum(list: ProductMovement[], pick: (m: ProductMovement) => number) {
   return list.reduce((acc, m) => acc + pick(m), 0);
 }
 
+// No PDF o espaco "especial" entre R$ e o numero vira espaco comum.
+function pdfMoney(cents: number) {
+  return formatCentsToBRL(cents).replace(/\u00a0/g, " ");
+}
+
 export function ProductReports() {
+  const { isAdmin } = useAuth();
   const { notify } = useToast();
   const [movements, setMovements] = useState<ProductMovement[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState<ProductMovement | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("");
   const [monthFilter, setMonthFilter] = useState("");
@@ -51,11 +61,14 @@ export function ProductReports() {
   const [minQuantity, setMinQuantity] = useState("");
   const [minValue, setMinValue] = useState("");
 
-  useEffect(() => {
-    listAllProductMovements()
+  function loadMovements() {
+    return listAllProductMovements()
       .then((data) => setMovements(data.items))
-      .catch((err) => notify(getApiErrorMessage(err), "error"))
-      .finally(() => setLoading(false));
+      .catch((err) => notify(getApiErrorMessage(err), "error"));
+  }
+
+  useEffect(() => {
+    loadMovements().finally(() => setLoading(false));
   }, []);
 
   const months = useMemo(
@@ -101,6 +114,94 @@ export function ProductReports() {
     setMinValue("");
   }
 
+  async function exportPdf() {
+    if (rows.length === 0) {
+      notify("Nada para exportar com esses filtros", "error");
+      return;
+    }
+    setExporting(true);
+    try {
+      // As bibliotecas so sao baixadas quando voce clica em exportar.
+      const [{ jsPDF }, autoTableModule] = await Promise.all([import("jspdf"), import("jspdf-autotable")]);
+      const autoTable = autoTableModule.default;
+
+      const filterParts: string[] = [];
+      if (typeFilter) filterParts.push(`Tipo: ${typeFilter === "ENTRADA" ? "só entradas" : "só retiradas"}`);
+      if (monthFilter) filterParts.push(`Mês: ${formatMonthKey(monthFilter)}`);
+      if (sectorFilter) filterParts.push(`Setor: ${sectorFilter}`);
+      if (employeeFilter) filterParts.push(`Funcionário: ${employeeFilter}`);
+      if (productFilter.trim()) filterParts.push(`Produto contém: ${productFilter.trim()}`);
+      if (minQuantity) filterParts.push(`Quantidade mín.: ${minQuantity}`);
+      if (minValue) filterParts.push(`Valor mín.: R$ ${minValue}`);
+
+      const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+      doc.setFontSize(16);
+      doc.text("Relatório de produtos", 14, 16);
+      doc.setFontSize(9);
+      doc.setTextColor(100);
+      doc.text(`Gerado em ${new Date().toLocaleString("pt-BR")}`, 14, 22);
+
+      const filtersText = filterParts.length ? `Filtros: ${filterParts.join("  |  ")}` : "Sem filtros (todos os registros)";
+      const filterLines = doc.splitTextToSize(filtersText, 269) as string[];
+      doc.text(filterLines, 14, 27);
+      doc.setTextColor(0);
+
+      autoTable(doc, {
+        startY: 27 + filterLines.length * 4 + 3,
+        head: [["Data", "Setor", "Funcionário", "Produto", "Quantidade", "Valor"]],
+        body: rows.map((m) => [
+          new Date(m.createdAt).toLocaleDateString("pt-BR"),
+          m.setor || "-",
+          m.funcionario || "-",
+          m.product?.name ?? "-",
+          `${m.type === "ENTRADA" ? "+" : "-"}${m.quantity}`,
+          pdfMoney(m.totalCents),
+        ]),
+        foot: [
+          [
+            { content: `Entradas - ${entries.length} registros`, colSpan: 4 },
+            `+${sum(entries, (m) => m.quantity)}`,
+            pdfMoney(sum(entries, (m) => m.totalCents)),
+          ],
+          [
+            { content: `Retiradas - ${exits.length} registros`, colSpan: 4 },
+            `-${sum(exits, (m) => m.quantity)}`,
+            pdfMoney(sum(exits, (m) => m.totalCents)),
+          ],
+        ],
+        showFoot: "lastPage",
+        styles: { fontSize: 9 },
+        headStyles: { fillColor: [31, 41, 55] },
+        footStyles: { fillColor: [243, 244, 246], textColor: 20, fontStyle: "bold" },
+        columnStyles: {
+          0: { cellWidth: 24 },
+          1: { cellWidth: 30 },
+          2: { cellWidth: 34 },
+          4: { cellWidth: 24, halign: "right" },
+          5: { cellWidth: 30, halign: "right" },
+        },
+      });
+
+      const pages = doc.getNumberOfPages();
+      for (let i = 1; i <= pages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.text(
+          `Página ${i} de ${pages}`,
+          doc.internal.pageSize.getWidth() - 14,
+          doc.internal.pageSize.getHeight() - 8,
+          { align: "right" }
+        );
+      }
+
+      doc.save(`relatorio-produtos-${new Date().toISOString().slice(0, 10)}.pdf`);
+    } catch (err) {
+      notify(getApiErrorMessage(err, "Nao foi possivel gerar o PDF"), "error");
+    } finally {
+      setExporting(false);
+    }
+  }
+
   const dash = <span className="text-muted">—</span>;
 
   return (
@@ -115,7 +216,10 @@ export function ProductReports() {
       </div>
 
       <h1 className="font-display text-3xl font-semibold text-ink">Relatorios</h1>
-      <p className="mb-4 text-sm text-muted">Todas as entradas e retiradas em uma tabela, com filtro em cada coluna</p>
+      <p className="mb-4 text-sm text-muted">
+        Todas as entradas e retiradas em uma tabela, com filtro em cada coluna
+        {isAdmin && ". Clique em uma linha para editar data, funcionario ou quantidade"}
+      </p>
 
       {loading ? (
         <div className="flex justify-center py-16">
@@ -142,9 +246,19 @@ export function ProductReports() {
                 {rows.length} de {movements.length} registros
               </span>
             </div>
-            <button type="button" onClick={clearFilters} className={`${actionButtonClass} !py-1.5`}>
-              Limpar filtros
-            </button>
+            <div className="flex gap-2">
+              <button type="button" onClick={clearFilters} className={`${actionButtonClass} !py-1.5`}>
+                Limpar filtros
+              </button>
+              <button
+                type="button"
+                onClick={exportPdf}
+                disabled={exporting}
+                className={`${actionButtonClass} !py-1.5 disabled:opacity-60`}
+              >
+                {exporting ? "Gerando PDF..." : "Exportar PDF"}
+              </button>
+            </div>
           </div>
 
           <div className="overflow-x-auto rounded border border-line bg-white">
@@ -238,7 +352,12 @@ export function ProductReports() {
                   </tr>
                 ) : (
                   rows.map((m) => (
-                    <tr key={m.id} className="border-t border-line">
+                    <tr
+                      key={m.id}
+                      onClick={isAdmin ? () => setEditing(m) : undefined}
+                      title={isAdmin ? "Clique para editar" : undefined}
+                      className={`border-t border-line ${isAdmin ? "cursor-pointer hover:bg-surface" : ""}`}
+                    >
                       <td className="px-2 py-2 align-top text-ink-soft">
                         {new Date(m.createdAt).toLocaleDateString("pt-BR")}
                       </td>
@@ -277,6 +396,16 @@ export function ProductReports() {
           </div>
         </div>
       )}
+
+      <EditMovementModal
+        movement={editing}
+        onClose={() => setEditing(null)}
+        onSaved={() => {
+          setEditing(null);
+          notify("Registro atualizado", "success");
+          loadMovements();
+        }}
+      />
     </div>
   );
 }
