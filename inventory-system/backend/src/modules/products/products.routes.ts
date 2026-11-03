@@ -4,6 +4,7 @@ import { requireAuth } from "@/middleware/auth";
 import { requirePermission, requireRole } from "@/middleware/rbac";
 import { validate } from "@/middleware/validate";
 import * as controller from "./products.controller";
+import { editMovementSchema, editMovementHandler } from "./products.reportedit";
 import {
   createProductSchema,
   updateProductSchema,
@@ -26,6 +27,12 @@ router.get("/movements", validate(listProductMovementsQuerySchema, "query"), con
 router.get("/reports/consumption", validate(consumptionReportQuerySchema, "query"), controller.consumptionReport);
 router.get("/reports/monthly-balance", controller.monthlyBalance);
 router.get("/reports/output-by-month", controller.outputByMonth);
+router.patch(
+  "/movements/:movementId/edit",
+  requireRole(Role.ADMIN),
+  validate(editMovementSchema),
+  editMovementHandler
+);
 router.patch(
   "/movements/:movementId/date",
   requireRole(Role.ADMIN),
