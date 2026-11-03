@@ -5,6 +5,7 @@ import { requirePermission, requireRole } from "@/middleware/rbac";
 import { validate } from "@/middleware/validate";
 import * as controller from "./products.controller";
 import { editMovementSchema, editMovementHandler } from "./products.reportedit";
+import { stockSummaryHandler } from "./products.stocksummary";
 import {
   createProductSchema,
   updateProductSchema,
@@ -21,8 +22,9 @@ const router = Router();
 
 router.use(requireAuth);
 
-// Rotas fixas (/movements, /reports/...) tem que vir ANTES de "/:id", senao
-// o Express tentaria tratar "movements" como um ID.
+// Rotas fixas (/movements, /reports/..., /stock-summary) tem que vir ANTES
+// de "/:id", senao o Express tentaria tratar o nome delas como um ID.
+router.get("/stock-summary", stockSummaryHandler);
 router.get("/movements", validate(listProductMovementsQuerySchema, "query"), controller.listMovements);
 router.get("/reports/consumption", validate(consumptionReportQuerySchema, "query"), controller.consumptionReport);
 router.get("/reports/monthly-balance", controller.monthlyBalance);
