@@ -46,10 +46,10 @@ function pdfMoney(cents: number) {
   return formatCentsToBRL(cents).replace(/\u00a0/g, " ");
 }
 
-// Carrega o logo (PNG transparente); no PDF ele vai sobre um quadro escuro.
+// Carrega o logo para o PDF: versao com letras escuras e fundo transparente (papel branco).
 async function loadLogoDataUrl(): Promise<string | null> {
   try {
-    const res = await fetch("/logo-autogama.png");
+    const res = await fetch("/logo-autogama-pdf.png");
     if (!res.ok) return null;
     const blob = await res.blob();
     if (!blob.type.startsWith("image/")) return null;
@@ -153,16 +153,12 @@ export function ProductReports() {
       if (minQuantity) filterParts.push(`Quantidade mín.: ${minQuantity}`);
       if (minValue) filterParts.push(`Valor mín.: R$ ${minValue}`);
 
-      const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+      const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4", compress: true });
       const pageWidth = doc.internal.pageSize.getWidth();
       const logo = await loadLogoDataUrl();
       if (logo) {
         try {
-          // Quadro escuro com cantos arredondados, igual ao fundo do site,
-          // para o texto branco do logo aparecer no papel branco.
-          doc.setFillColor(23, 26, 33);
-          doc.roundedRect(pageWidth - 14 - 30, 8, 30, 30, 3, 3, "F");
-          doc.addImage(logo, "PNG", pageWidth - 14 - 28, 10, 26, 25.2);
+          doc.addImage(logo, "PNG", pageWidth - 14 - 28, 8, 28, 27.1, "logo", "FAST");
         } catch {
           // Se o logo nao puder ser lido, o PDF sai normalmente sem ele.
         }
