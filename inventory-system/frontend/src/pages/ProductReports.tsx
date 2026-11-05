@@ -285,7 +285,117 @@ export function ProductReports() {
             </div>
           </div>
 
-          <div className="overflow-x-auto rounded border border-line bg-white">
+          {/* Celular: filtros em bloco + um cartao por registro (sem rolagem lateral) */}
+          <div className="sm:hidden">
+            <div className="mb-2.5 grid grid-cols-2 gap-2 rounded border border-line bg-white p-3">
+              <label className="text-xs font-medium text-muted">
+                Mês
+                <select value={monthFilter} onChange={(e) => setMonthFilter(e.target.value)} className={`${filterClass} mt-1`}>
+                  <option value="">Todos</option>
+                  {months.map((m) => (
+                    <option key={m} value={m}>
+                      {formatMonthKey(m)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="text-xs font-medium text-muted">
+                Setor
+                <select value={sectorFilter} onChange={(e) => setSectorFilter(e.target.value)} className={`${filterClass} mt-1`}>
+                  <option value="">Todos</option>
+                  {sectors.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="text-xs font-medium text-muted">
+                Funcionário
+                <select
+                  value={employeeFilter}
+                  onChange={(e) => setEmployeeFilter(e.target.value)}
+                  className={`${filterClass} mt-1`}
+                >
+                  <option value="">Todos</option>
+                  {employees.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="text-xs font-medium text-muted">
+                Produto
+                <input
+                  value={productFilter}
+                  onChange={(e) => setProductFilter(e.target.value)}
+                  placeholder="Buscar produto"
+                  className={`${filterClass} mt-1`}
+                />
+              </label>
+              <label className="text-xs font-medium text-muted">
+                Quantidade mín.
+                <input
+                  inputMode="numeric"
+                  value={minQuantity}
+                  onChange={(e) => setMinQuantity(onlyDigits(e.target.value))}
+                  placeholder="min."
+                  className={`${filterClass} mt-1`}
+                />
+              </label>
+              <label className="text-xs font-medium text-muted">
+                Valor mín. (R$)
+                <input
+                  inputMode="decimal"
+                  value={minValue}
+                  onChange={(e) => setMinValue(sanitizeMoney(e.target.value))}
+                  placeholder="min. R$"
+                  className={`${filterClass} mt-1`}
+                />
+              </label>
+            </div>
+
+            {rows.length === 0 ? (
+              <p className="rounded border border-line bg-white px-4 py-6 text-center text-sm text-muted">
+                Nada encontrado com esses filtros.
+              </p>
+            ) : (
+              <ul className="space-y-2">
+                {rows.map((m) => (
+                  <li key={m.id}>
+                    <div
+                      role={isAdmin ? "button" : undefined}
+                      tabIndex={isAdmin ? 0 : undefined}
+                      onClick={isAdmin ? () => setEditing(m) : undefined}
+                      className={`rounded border border-line bg-white px-4 py-3 ${isAdmin ? "cursor-pointer active:bg-surface" : ""}`}
+                    >
+                      <div className="flex items-center justify-between gap-3 text-xs text-muted">
+                        <span>{new Date(m.createdAt).toLocaleDateString("pt-BR")}</span>
+                        <span className="text-sm font-semibold text-ink">{formatCentsToBRL(m.totalCents)}</span>
+                      </div>
+                      <p className="mt-1 break-words font-medium text-ink">{m.product?.name ?? "-"}</p>
+                      <div className="mt-1 flex items-center justify-between gap-3">
+                        <span className="min-w-0 truncate text-xs text-muted">
+                          {m.type === "ENTRADA" ? "Entrada" : [m.setor, m.funcionario].filter(Boolean).join(" · ") || "Retirada"}
+                        </span>
+                        <span
+                          className={`font-display text-xl font-semibold leading-none ${
+                            m.type === "ENTRADA" ? "text-success" : "text-danger"
+                          }`}
+                        >
+                          {m.type === "ENTRADA" ? "+" : "−"}
+                          {m.quantity}
+                        </span>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div className="hidden overflow-x-auto rounded border border-line bg-white sm:block">
             <table className="w-full min-w-[760px] table-fixed border-collapse text-sm">
               <colgroup>
                 <col style={{ width: "104px" }} />
