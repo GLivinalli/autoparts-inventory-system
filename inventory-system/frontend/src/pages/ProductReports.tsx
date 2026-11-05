@@ -52,6 +52,7 @@ async function loadLogoDataUrl(): Promise<string | null> {
     const res = await fetch("/logo-autogama-circulo.png");
     if (!res.ok) return null;
     const blob = await res.blob();
+    if (!blob.type.startsWith("image/")) return null;
     return await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result as string);
@@ -155,7 +156,13 @@ export function ProductReports() {
       const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
       const pageWidth = doc.internal.pageSize.getWidth();
       const logo = await loadLogoDataUrl();
-      if (logo) doc.addImage(logo, "PNG", pageWidth - 14 - 24, 8, 24, 24);
+      if (logo) {
+        try {
+          doc.addImage(logo, "PNG", pageWidth - 14 - 24, 8, 24, 24);
+        } catch {
+          // Se o logo nao puder ser lido, o PDF sai normalmente sem ele.
+        }
+      }
 
       doc.setFontSize(16);
       doc.text("Relatório de produtos", 14, 16);
@@ -170,7 +177,11 @@ export function ProductReports() {
 
       // Totais sempre no inicio, antes da tabela.
       const totalsStartY = Math.max(27 + filterLines.length * 4 + 3, 36);
+      let totalsEndY = totalsStartY + 28;
       autoTable(doc, {
+        didDrawPage: (data) => {
+          if (data.cursor && typeof data.cursor.y === "number") totalsEndY = data.cursor.y;
+        },
         startY: totalsStartY,
         head: [["Resumo", "Registros", "Quantidade", "Valor total"]],
         body: [
@@ -189,7 +200,7 @@ export function ProductReports() {
         margin: { left: 14 },
       });
 
-      const afterTotalsY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 6;
+      const afterTotalsY = totalsEndY + 6;
       autoTable(doc, {
         startY: afterTotalsY,
         head: [["Data", "Setor", "Funcionário", "Produto", "Quantidade", "Valor"]],
@@ -226,7 +237,8 @@ export function ProductReports() {
 
       doc.save(`relatorio-produtos-${new Date().toISOString().slice(0, 10)}.pdf`);
     } catch (err) {
-      notify(getApiErrorMessage(err, "Não foi possível gerar o PDF"), "error");
+      const detail = err instanceof Error && err.message ? ` (${err.message})` : "";
+      notify(getApiErrorMessage(err, `Não foi possível gerar o PDF${detail}`), "error");
     } finally {
       setExporting(false);
     }
