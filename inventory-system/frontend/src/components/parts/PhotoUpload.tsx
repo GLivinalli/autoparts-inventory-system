@@ -61,7 +61,7 @@ export function PhotoUpload({ value, onChange }: PhotoUploadProps) {
       const url = await uploadPartPhoto(resized);
       onChange(url);
     } catch (err) {
-      setError(getApiErrorMessage(err, "Nao foi possivel enviar a foto"));
+      setError(getApiErrorMessage(err, "Não foi possível enviar a foto"));
     } finally {
       setUploading(false);
     }
@@ -110,7 +110,7 @@ export function PhotoUpload({ value, onChange }: PhotoUploadProps) {
               </button>
             )}
           </div>
-          <p className="text-xs text-muted">JPG, PNG ou WEBP, ate 5MB.</p>
+          <p className="text-xs text-muted">JPG, PNG ou WEBP, até 5MB.</p>
         </div>
       </div>
 

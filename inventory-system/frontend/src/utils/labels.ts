@@ -11,7 +11,7 @@ export const SIDE_LABELS: Record<PartSide, string> = {
   SUPERIOR: "Superior",
   INFERIOR: "Inferior",
   CENTRAL: "Central",
-  NAO_SE_APLICA: "Nao se aplica",
+  NAO_SE_APLICA: "Não se aplica",
 };
 
 export const CONDITION_LABELS: Record<PartCondition, string> = {
@@ -21,7 +21,7 @@ export const CONDITION_LABELS: Record<PartCondition, string> = {
 
 export const ROLE_LABELS: Record<Role, string> = {
   ADMIN: "Administrador",
-  USER: "Usuario comum",
+  USER: "Usuário comum",
 };
 
 export function formatDate(value: string): string {

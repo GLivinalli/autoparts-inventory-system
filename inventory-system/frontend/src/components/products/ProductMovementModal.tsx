@@ -78,7 +78,7 @@ export function ProductMovementModal({
       setFuncionario("");
       setDescription("");
     } catch (err) {
-      setError(getApiErrorMessage(err, "Nao foi possivel registrar a movimentacao"));
+      setError(getApiErrorMessage(err, "Não foi possível registrar a movimentação"));
       setConfirming(false);
     } finally {
       setSubmitting(false);
@@ -91,7 +91,7 @@ export function ProductMovementModal({
         <div className="w-full max-w-sm rounded-t-md bg-white p-5 shadow-lg sm:rounded-md">
           <div className="mb-1 flex items-center justify-between">
             <h2 className="font-display text-2xl font-semibold text-ink">
-              {isEntrada ? "Entrada de estoque" : "Saida de estoque"}
+              {isEntrada ? "Entrada de estoque" : "Saída de estoque"}
             </h2>
             <button type="button" onClick={onClose} className="rounded p-1 text-muted hover:bg-surface" aria-label="Fechar">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -124,7 +124,7 @@ export function ProductMovementModal({
                 className="mb-1 h-11 w-full rounded border border-line px-3 text-sm focus:border-accent"
               />
               <p className="mb-3 text-xs text-muted">
-                Valor total da compra dessas {parsedQuantity || 0} unidades - o custo por unidade e calculado
+                Valor total da compra dessas {parsedQuantity || 0} unidades - o custo por unidade é calculado
                 sozinho.
               </p>
             </>
@@ -137,7 +137,7 @@ export function ProductMovementModal({
                 placeholder="Ex.: Producao, Administrativo"
                 className="mb-3 h-11 w-full rounded border border-line px-3 text-sm focus:border-accent"
               />
-              <label className="mb-1 block text-sm font-medium text-ink">Funcionario</label>
+              <label className="mb-1 block text-sm font-medium text-ink">Funcionário</label>
               <input
                 value={funcionario}
                 onChange={(e) => setFuncionario(e.target.value)}
@@ -148,7 +148,7 @@ export function ProductMovementModal({
           )}
 
           <label className="mb-1 block text-sm font-medium text-ink">
-            Observacao <span className="font-normal text-muted">(opcional)</span>
+            Observação <span className="font-normal text-muted">(opcional)</span>
           </label>
           <textarea
             value={description}
@@ -178,7 +178,7 @@ export function ProductMovementModal({
 
       <ConfirmDialog
         open={confirming}
-        title={isEntrada ? "Confirmar entrada" : "Confirmar saida"}
+        title={isEntrada ? "Confirmar entrada" : "Confirmar saída"}
         tone={isEntrada ? "accent" : "danger"}
         loading={submitting}
         description={
@@ -187,7 +187,7 @@ export function ProductMovementModal({
             <strong>{product.name}</strong>? Estoque: {product.quantity} &rarr; {projected}.
           </>
         }
-        confirmLabel={isEntrada ? "Confirmar entrada" : "Confirmar saida"}
+        confirmLabel={isEntrada ? "Confirmar entrada" : "Confirmar saída"}
         onConfirm={handleConfirm}
         onCancel={() => setConfirming(false)}
       />

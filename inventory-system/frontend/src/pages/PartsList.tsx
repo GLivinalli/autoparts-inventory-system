@@ -108,7 +108,7 @@ export function PartsList() {
         inventoryDate: values.inventoryDate,
         photoUrl: values.photoUrl,
       });
-      notify("Peca atualizada com sucesso", "success");
+      notify("Peça atualizada com sucesso", "success");
     } else {
       await partsApi.createPart({
         name: values.name,
@@ -121,7 +121,7 @@ export function PartsList() {
         inventoryDate: values.inventoryDate,
         photoUrl: values.photoUrl,
       });
-      notify("Peca cadastrada com sucesso", "success");
+      notify("Peça cadastrada com sucesso", "success");
     }
     setFormOpen(false);
     setEditingPart(null);
@@ -141,11 +141,11 @@ export function PartsList() {
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h1 className="font-display text-3xl font-semibold text-ink">
-            {viewArchived ? "Pecas arquivadas" : "Pecas"}
+            {viewArchived ? "Peças arquivadas" : "Peças"}
           </h1>
           <p className="text-sm text-muted">
             {viewArchived
-              ? "Pecas fora do inventario ativo - o historico de cada uma continua preservado"
+              ? "Peças fora do inventário ativo — o histórico de cada uma continua preservado"
               : "Consulte, cadastre e controle o estoque"}
           </p>
         </div>
@@ -198,7 +198,7 @@ export function PartsList() {
       ) : parts.length === 0 ? (
         <div className="rounded border border-dashed border-line bg-white py-16 text-center">
           <p className="text-sm text-muted">
-            {viewArchived ? "Nenhuma peca arquivada." : "Nenhuma peca encontrada com estes filtros."}
+            {viewArchived ? "Nenhuma peça arquivada." : "Nenhuma peça encontrada com estes filtros."}
           </p>
         </div>
       ) : (

@@ -59,7 +59,7 @@ export function History() {
                 </div>
               </li>
             ))}
-            {movements.length === 0 && <p className="px-4 py-10 text-center text-sm text-muted">Nenhuma movimentacao registrada.</p>}
+            {movements.length === 0 && <p className="px-4 py-10 text-center text-sm text-muted">Nenhuma movimentação registrada.</p>}
           </ul>
           <Pagination page={page} totalPages={totalPages} onChange={setPage} />
         </div>

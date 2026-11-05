@@ -61,8 +61,8 @@ export function Sidebar() {
   return (
     <aside className="hidden w-60 shrink-0 flex-col bg-ink px-3 py-5 lg:flex">
       <div className="mb-8 px-2">
-        <p className="font-display text-2xl font-semibold leading-none text-white">AutoParts</p>
-        <p className="mt-1 text-xs uppercase tracking-wide text-white/50">Controle de inventario</p>
+        <p className="font-display text-2xl font-semibold leading-none text-white">Auto Gama</p>
+        <p className="mt-1 text-xs uppercase tracking-wide text-white/50">Controle de inventário</p>
       </div>
 
       <nav className="flex flex-1 flex-col gap-1">
@@ -70,10 +70,10 @@ export function Sidebar() {
           <IconDashboard /> Dashboard
         </NavLink>
         <NavLink to="/pecas" className={({ isActive }) => `${linkBase} ${isActive ? linkActive : linkInactive}`}>
-          <IconParts /> Pecas
+          <IconParts /> Peças
         </NavLink>
         <NavLink to="/historico" className={({ isActive }) => `${linkBase} ${isActive ? linkActive : linkInactive}`}>
-          <IconHistory /> Historico
+          <IconHistory /> Histórico
         </NavLink>
         <div className="my-2 border-t border-white/10" />
         <NavLink to="/produtos" className={({ isActive }) => `${linkBase} ${isActive ? linkActive : linkInactive}`}>
@@ -83,7 +83,7 @@ export function Sidebar() {
           <>
             <div className="my-2 border-t border-white/10" />
             <NavLink to="/usuarios" className={({ isActive }) => `${linkBase} ${isActive ? linkActive : linkInactive}`}>
-              <IconUsers /> Usuarios
+              <IconUsers /> Usuários
             </NavLink>
           </>
         )}

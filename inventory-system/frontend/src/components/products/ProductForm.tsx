@@ -74,7 +74,7 @@ export function ProductForm({ open, editingProduct, onClose, onSubmit }: Product
 
   function handleRequestClose() {
     const isDirty = JSON.stringify(values) !== initialSnapshotRef.current;
-    if (isDirty && !window.confirm("Voce tem alteracoes nao salvas. Deseja realmente fechar sem salvar?")) {
+    if (isDirty && !window.confirm("Você tem alterações não salvas. Deseja realmente fechar sem salvar?")) {
       return;
     }
     onClose();
@@ -102,7 +102,7 @@ export function ProductForm({ open, editingProduct, onClose, onSubmit }: Product
     if (existing) {
       setValues((v) => ({ ...v, name: "", manufacturer: existing.manufacturer, existingProductId: existing.id }));
       setNotice(
-        `"${existing.name}" ja esta na lista (${existing.manufacturer}). Selecionei ele pra voce - e so informar a quantidade e o valor.`
+        `"${existing.name}" já está na lista (${existing.manufacturer}). Selecionei ele para você — é só informar a quantidade e o valor.`
       );
     } else {
       setValues((v) => ({
@@ -131,7 +131,7 @@ export function ProductForm({ open, editingProduct, onClose, onSubmit }: Product
 
     const quantity = Number(values.initialQuantity) || 0;
     if (isExisting && quantity <= 0) {
-      return setError("Informe a quantidade que esta entrando");
+      return setError("Informe a quantidade que está entrando");
     }
     if (quantity > 0) {
       if (!values.totalValueReais.trim()) return setError("Informe o valor total pago");
@@ -143,7 +143,7 @@ export function ProductForm({ open, editingProduct, onClose, onSubmit }: Product
     try {
       await onSubmit(values);
     } catch (err) {
-      setError(getApiErrorMessage(err, "Nao foi possivel salvar o produto"));
+      setError(getApiErrorMessage(err, "Não foi possível salvar o produto"));
     } finally {
       setSubmitting(false);
     }
@@ -245,8 +245,8 @@ export function ProductForm({ open, editingProduct, onClose, onSubmit }: Product
               </div>
               <p className="col-span-2 text-xs text-muted">
                 {isExisting
-                  ? "Informe a quantidade que esta entrando e quanto voce pagou no total - a entrada soma no estoque desse produto."
-                  : "Informe quanto voce pagou no total pela quantidade acima - o custo por unidade e calculado sozinho. Se deixar a quantidade vazia, o produto fica cadastrado sem estoque."}
+                  ? "Informe a quantidade que está entrando e quanto você pagou no total - a entrada soma no estoque desse produto."
+                  : "Informe quanto você pagou no total pela quantidade acima - o custo por unidade é calculado sozinho. Se deixar a quantidade vazia, o produto fica cadastrado sem estoque."}
               </p>
             </div>
           )}

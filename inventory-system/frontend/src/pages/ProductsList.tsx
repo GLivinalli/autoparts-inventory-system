@@ -108,7 +108,7 @@ export function ProductsList() {
     description?: string
   ) {
     await productsApi.createSaida(productId, quantity, setor, funcionario, description);
-    notify("Saida registrada", "success");
+    notify("Saída registrada", "success");
     setQuickWithdrawalOpen(false);
     refreshList();
   }
@@ -120,7 +120,7 @@ export function ProductsList() {
           Estoque
         </NavLink>
         <NavLink to="/produtos/relatorios" className={({ isActive }) => (isActive ? activeTabClass : actionButtonClass)}>
-          Relatorios
+          Relatórios
         </NavLink>
         {can("canStockOutProducts") && (
           <button onClick={() => setQuickWithdrawalOpen(true)} className={actionButtonClass}>

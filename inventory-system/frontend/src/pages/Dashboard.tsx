@@ -43,7 +43,7 @@ export function Dashboard() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="font-display text-3xl font-semibold text-ink">Bem Vindo, {user?.name.split(" ")[0]}!</h1>
+          <h1 className="font-display text-3xl font-semibold text-ink">Bem-vindo, {user?.name.split(" ")[0]}!</h1>
           <p className="text-sm text-muted">Visão geral do inventário</p>
         </div>
         <Link

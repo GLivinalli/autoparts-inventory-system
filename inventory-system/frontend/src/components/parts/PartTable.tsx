@@ -7,11 +7,11 @@ export function PartTable({ parts, onSelect }: { parts: Part[]; onSelect: (part:
     <table className="w-full border-separate border-spacing-0 text-sm">
       <thead>
         <tr className="text-left text-xs uppercase tracking-wide text-muted">
-          <th className="border-b border-line py-2.5 pl-1 font-medium">Peca</th>
+          <th className="border-b border-line py-2.5 pl-1 font-medium">Peça</th>
           <th className="border-b border-line py-2.5 font-medium">SKU</th>
           <th className="border-b border-line py-2.5 font-medium">Montadora</th>
           <th className="border-b border-line py-2.5 font-medium">Estado</th>
-          <th className="border-b border-line py-2.5 font-medium">Inventario</th>
+          <th className="border-b border-line py-2.5 font-medium">Inventário</th>
           <th className="border-b border-line py-2.5 pr-1 text-right font-medium">Estoque</th>
         </tr>
       </thead>

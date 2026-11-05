@@ -152,7 +152,7 @@ export function SearchableSelect({
               }}
               className="cursor-pointer px-3 py-2 text-sm text-steel hover:bg-surface"
             >
-              Limpar selecao
+              Limpar seleção
             </li>
           )}
           {filtered.length === 0 ? (

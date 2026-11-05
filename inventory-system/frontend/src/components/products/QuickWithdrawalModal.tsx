@@ -100,7 +100,7 @@ export function QuickWithdrawalModal({ open, onClose, onSubmit }: QuickWithdrawa
       setFuncionario("");
       setDescription("");
     } catch (err) {
-      setError(getApiErrorMessage(err, "Nao foi possivel registrar a saida"));
+      setError(getApiErrorMessage(err, "Não foi possível registrar a saída"));
       setConfirming(false);
     } finally {
       setSubmitting(false);
@@ -109,7 +109,7 @@ export function QuickWithdrawalModal({ open, onClose, onSubmit }: QuickWithdrawa
 
   const emptyListHint = isAdmin
     ? "Lista vazia. Use \"Gerenciar setores e funcionarios\" para adicionar."
-    : "Lista vazia. Peca a um administrador para adicionar.";
+    : "Lista vazia. Peça a um administrador para adicionar.";
 
   return (
     <>
@@ -170,7 +170,7 @@ export function QuickWithdrawalModal({ open, onClose, onSubmit }: QuickWithdrawa
           </select>
           {sectors.length === 0 && <p className="-mt-2 mb-3 text-xs text-muted">{emptyListHint}</p>}
 
-          <label className="mb-1 block text-sm font-medium text-ink">Funcionario</label>
+          <label className="mb-1 block text-sm font-medium text-ink">Funcionário</label>
           <select value={funcionario} onChange={(e) => setFuncionario(e.target.value)} className={selectClass}>
             <option value="">Selecione</option>
             {employees.map((e) => (
@@ -182,7 +182,7 @@ export function QuickWithdrawalModal({ open, onClose, onSubmit }: QuickWithdrawa
           {employees.length === 0 && <p className="-mt-2 mb-3 text-xs text-muted">{emptyListHint}</p>}
 
           <label className="mb-1 block text-sm font-medium text-ink">
-            Observacao <span className="font-normal text-muted">(opcional)</span>
+            Observação <span className="font-normal text-muted">(opcional)</span>
           </label>
           <textarea
             value={description}
@@ -212,7 +212,7 @@ export function QuickWithdrawalModal({ open, onClose, onSubmit }: QuickWithdrawa
 
       <ConfirmDialog
         open={confirming}
-        title="Confirmar saida"
+        title="Confirmar saída"
         tone="danger"
         loading={submitting}
         description={
@@ -223,7 +223,7 @@ export function QuickWithdrawalModal({ open, onClose, onSubmit }: QuickWithdrawa
             </>
           )
         }
-        confirmLabel="Confirmar saida"
+        confirmLabel="Confirmar saída"
         onConfirm={handleConfirm}
         onCancel={() => setConfirming(false)}
       />

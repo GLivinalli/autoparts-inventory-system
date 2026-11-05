@@ -1,15 +1,16 @@
 import { NavLink } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
-const itemBase = "flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-medium";
-const active = "text-accent";
-const inactive = "text-white/60";
+const itemBase =
+  "flex flex-1 flex-col items-center gap-1 border-t-2 py-2.5 text-[11px] font-medium transition-colors";
+const active = "border-accent text-accent";
+const inactive = "border-transparent text-white/60";
 
 export function MobileNav() {
   const { isAdmin } = useAuth();
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-white/10 bg-ink lg:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-white/10 bg-ink pb-[env(safe-area-inset-bottom)] lg:hidden">
       <NavLink to="/" end className={({ isActive }) => `${itemBase} ${isActive ? active : inactive}`}>
         <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <rect x="3" y="3" width="7" height="9" rx="1" />
@@ -24,7 +25,7 @@ export function MobileNav() {
           <path d="M3 8h18l-1.5 12.5A2 2 0 0 1 17.5 22h-11a2 2 0 0 1-2-1.5L3 8Z" />
           <path d="M9 12h6" />
         </svg>
-        Pecas
+        Peças
       </NavLink>
       <NavLink to="/produtos" className={({ isActive }) => `${itemBase} ${isActive ? active : inactive}`}>
         <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -38,7 +39,7 @@ export function MobileNav() {
           <path d="M3.05 13A9 9 0 1 0 6 5.3L3 8" />
           <path d="M12 7v5l3 3" />
         </svg>
-        Historico
+        Histórico
       </NavLink>
       {isAdmin && (
         <NavLink to="/usuarios" className={({ isActive }) => `${itemBase} ${isActive ? active : inactive}`}>
@@ -46,7 +47,7 @@ export function MobileNav() {
             <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
             <circle cx="9" cy="7" r="4" />
           </svg>
-          Usuarios
+          Usuários
         </NavLink>
       )}
     </nav>

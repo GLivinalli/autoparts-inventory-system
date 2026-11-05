@@ -49,7 +49,7 @@ export function StockMovementModal({ open, part, type, onClose, onSubmit }: Stoc
       setQuantity("1");
       setDescription("");
     } catch (err) {
-      setError(getApiErrorMessage(err, "Nao foi possivel registrar a movimentacao"));
+      setError(getApiErrorMessage(err, "Não foi possível registrar a movimentação"));
       setConfirming(false);
     } finally {
       setSubmitting(false);
@@ -85,7 +85,7 @@ export function StockMovementModal({ open, part, type, onClose, onSubmit }: Stoc
           />
 
           <label className="mb-1 mt-3 block text-sm font-medium text-ink">
-            Observacao/motivo <span className="font-normal text-muted">(opcional)</span>
+            Observação/motivo <span className="font-normal text-muted">(opcional)</span>
           </label>
           <textarea
             value={description}

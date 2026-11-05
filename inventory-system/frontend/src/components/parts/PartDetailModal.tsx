@@ -81,7 +81,7 @@ export function PartDetailModal({
     setDeleting(true);
     try {
       await deletePart(part.id);
-      notify("Peca excluida definitivamente", "success");
+      notify("Peça excluída definitivamente", "success");
       setConfirmingDelete(false);
       onArchived();
       onClose();
@@ -183,7 +183,7 @@ export function PartDetailModal({
                 </p>
               </div>
               <div className="rounded border border-line p-3">
-                <p className="text-xs text-muted">Inventario</p>
+                <p className="text-xs text-muted">Inventário</p>
                 <p className="mt-1 text-sm font-medium text-ink">{formatDate(part.inventoryDate)}</p>
               </div>
               <div className="rounded border border-line p-3">
@@ -251,8 +251,8 @@ export function PartDetailModal({
             )}
 
             <div className="mt-6">
-              <h4 className="mb-2 font-display text-lg font-semibold text-ink">Historico de movimentacoes</h4>
-              {history.length === 0 && <p className="text-sm text-muted">Nenhuma movimentacao registrada ainda.</p>}
+              <h4 className="mb-2 font-display text-lg font-semibold text-ink">Histórico de movimentações</h4>
+              {history.length === 0 && <p className="text-sm text-muted">Nenhuma movimentação registrada ainda.</p>}
               <ul className="divide-y divide-line rounded border border-line">
                 {history.map((m) => (
                   <li key={m.id} className="flex items-center justify-between gap-3 px-3 py-2.5">
@@ -288,7 +288,7 @@ export function PartDetailModal({
         title="Arquivar peca"
         tone="danger"
         loading={archiving}
-        description="A peca sai da listagem ativa, mas todo o historico e mantido. Voce pode reativar depois."
+        description="A peça sai da listagem ativa, mas todo o histórico é mantido. Você pode reativar depois."
         confirmLabel="Arquivar"
         onConfirm={handleArchiveToggle}
         onCancel={() => setConfirmingArchive(false)}
@@ -301,8 +301,8 @@ export function PartDetailModal({
         loading={deleting}
         description={
           <>
-            Isso apaga <strong>{part?.name}</strong> e todo o historico de movimentacoes dela para sempre. Nao
-            tem como desfazer. Use isso so para pecas cadastradas por engano ou para teste.
+            Isso apaga <strong>{part?.name}</strong> e todo o histórico de movimentações dela para sempre. Não
+            tem como desfazer. Use isso só para peças cadastradas por engano ou para teste.
           </>
         }
         confirmLabel="Excluir para sempre"

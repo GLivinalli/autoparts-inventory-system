@@ -17,15 +17,15 @@ export function ChangePassword() {
     e.preventDefault();
     setError(null);
     if (newPassword.length < 8) return setError("A nova senha deve ter pelo menos 8 caracteres");
-    if (newPassword !== confirmPassword) return setError("As senhas novas nao coincidem");
+    if (newPassword !== confirmPassword) return setError("As senhas novas não coincidem");
 
     setSubmitting(true);
     try {
       await changePassword(currentPassword, newPassword);
-      notify("Senha alterada com sucesso. Faca login novamente.", "success");
+      notify("Senha alterada com sucesso. Faça login novamente.", "success");
       await logout();
     } catch (err) {
-      setError(getApiErrorMessage(err, "Nao foi possivel trocar a senha"));
+      setError(getApiErrorMessage(err, "Não foi possível trocar a senha"));
     } finally {
       setSubmitting(false);
     }
@@ -35,7 +35,7 @@ export function ChangePassword() {
     <div className="mx-auto max-w-sm">
       <h1 className="font-display text-3xl font-semibold text-ink">Trocar senha</h1>
       <p className="mb-5 text-sm text-muted">
-        Voce sera desconectado depois de trocar, para entrar de novo ja com a senha nova.
+        Você será desconectado depois de trocar, para entrar de novo já com a senha nova.
       </p>
       <form onSubmit={handleSubmit} className="rounded border border-line bg-white p-5">
         <label className="mb-1 block text-sm font-medium text-ink">Senha atual</label>

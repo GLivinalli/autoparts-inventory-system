@@ -11,13 +11,13 @@ const PERMISSION_LABELS: Record<keyof UserPermissions, string> = {
   canCreateParts: "Cadastrar pecas",
   canEditParts: "Editar pecas",
   canArchiveParts: "Arquivar pecas",
-  canStockIn: "Fazer entradas (Pecas)",
-  canStockOut: "Fazer retiradas (Pecas)",
+  canStockIn: "Fazer entradas (Peças)",
+  canStockOut: "Fazer retiradas (Peças)",
   canManageUsers: "Gerenciar usuarios",
   canManageProducts: "Cadastrar/editar produtos",
   canStockInProducts: "Fazer entradas (Produtos)",
-  canStockOutProducts: "Fazer saidas (Produtos)",
-  canDeleteProductMoves: "Excluir movimentacoes (Produtos)",
+  canStockOutProducts: "Fazer saídas (Produtos)",
+  canDeleteProductMoves: "Excluir movimentações (Produtos)",
 };
 
 function emptyPermissions(): UserPermissions {
@@ -66,7 +66,7 @@ export function Users() {
     setError(null);
     try {
       await usersApi.createUser({ name, email, password, role, permissions });
-      notify("Usuario criado com sucesso", "success");
+      notify("Usuário criado com sucesso", "success");
       setShowCreate(false);
       setName("");
       setEmail("");
@@ -75,7 +75,7 @@ export function Users() {
       setPermissions(emptyPermissions());
       loadUsers();
     } catch (err) {
-      setError(getApiErrorMessage(err, "Nao foi possivel criar o usuario"));
+      setError(getApiErrorMessage(err, "Não foi possível criar o usuário"));
     } finally {
       setSubmitting(false);
     }
@@ -91,7 +91,7 @@ export function Users() {
     try {
       const updated = await usersApi.updateUser(user.id, { active: !user.active });
       setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
-      notify(updated.active ? "Usuario ativado" : "Usuario desativado", "success");
+      notify(updated.active ? "Usuário ativado" : "Usuário desativado", "success");
     } catch (err) {
       notify(getApiErrorMessage(err), "error");
     }
@@ -101,8 +101,8 @@ export function Users() {
     <div>
       <div className="mb-5 flex items-center justify-between">
         <div>
-          <h1 className="font-display text-3xl font-semibold text-ink">Usuarios</h1>
-          <p className="text-sm text-muted">Gerencie acessos e permissoes</p>
+          <h1 className="font-display text-3xl font-semibold text-ink">Usuários</h1>
+          <p className="text-sm text-muted">Gerencie acessos e permissões</p>
         </div>
         <button
           onClick={() => setShowCreate(true)}
@@ -143,7 +143,7 @@ export function Users() {
 
           <div className="rounded border border-line bg-white p-4">
             {!selected ? (
-              <p className="text-sm text-muted">Selecione um usuario para ver e editar as permissoes.</p>
+              <p className="text-sm text-muted">Selecione um usuário para ver e editar as permissões.</p>
             ) : (
               <div>
                 <div className="mb-3 flex items-center justify-between">
@@ -219,7 +219,7 @@ export function Users() {
               onChange={(e) => setRole(e.target.value as Role)}
               className="mb-3 h-11 w-full rounded border border-line bg-white px-3 text-sm focus:border-accent"
             >
-              <option value="USER">Usuario comum</option>
+              <option value="USER">Usuário comum</option>
               <option value="ADMIN">Administrador</option>
             </select>
 

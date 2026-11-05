@@ -196,7 +196,7 @@ export function ProductReports() {
 
       doc.save(`relatorio-produtos-${new Date().toISOString().slice(0, 10)}.pdf`);
     } catch (err) {
-      notify(getApiErrorMessage(err, "Nao foi possivel gerar o PDF"), "error");
+      notify(getApiErrorMessage(err, "Não foi possível gerar o PDF"), "error");
     } finally {
       setExporting(false);
     }
@@ -211,11 +211,11 @@ export function ProductReports() {
           Estoque
         </NavLink>
         <NavLink to="/produtos/relatorios" className={({ isActive }) => (isActive ? activeTabClass : actionButtonClass)}>
-          Relatorios
+          Relatórios
         </NavLink>
       </div>
 
-      <h1 className="font-display text-3xl font-semibold text-ink">Relatorios</h1>
+      <h1 className="font-display text-3xl font-semibold text-ink">Relatórios</h1>
       <p className="mb-4 text-sm text-muted">
         Todas as entradas e retiradas em uma tabela, com filtro em cada coluna
         {isAdmin && ". Clique em uma linha para editar data, funcionario ou quantidade"}
@@ -227,7 +227,7 @@ export function ProductReports() {
         </div>
       ) : movements.length === 0 ? (
         <div className="rounded border border-dashed border-line bg-white py-16 text-center">
-          <p className="text-sm text-muted">Nenhuma movimentacao registrada ainda.</p>
+          <p className="text-sm text-muted">Nenhuma movimentação registrada ainda.</p>
         </div>
       ) : (
         <div className="rounded-md bg-surface-1 p-3">
@@ -239,8 +239,8 @@ export function ProductReports() {
                 className="h-8 rounded border border-line bg-white px-2 text-sm focus:border-accent"
               >
                 <option value="">Entradas e retiradas</option>
-                <option value="ENTRADA">So entradas</option>
-                <option value="RETIRADA">So retiradas</option>
+                <option value="ENTRADA">Só entradas</option>
+                <option value="RETIRADA">Só retiradas</option>
               </select>
               <span className="text-sm text-muted">
                 {rows.length} de {movements.length} registros
@@ -275,7 +275,7 @@ export function ProductReports() {
                 <tr className="text-left text-xs font-medium text-muted">
                   <th className="px-2 pb-1 pt-2.5 font-medium">Data</th>
                   <th className="px-2 pb-1 pt-2.5 font-medium">Setor</th>
-                  <th className="px-2 pb-1 pt-2.5 font-medium">Funcionario</th>
+                  <th className="px-2 pb-1 pt-2.5 font-medium">Funcionário</th>
                   <th className="px-2 pb-1 pt-2.5 font-medium">Produto</th>
                   <th className="px-2 pb-1 pt-2.5 text-right font-medium">Quantidade</th>
                   <th className="px-2 pb-1 pt-2.5 text-right font-medium">Valor</th>

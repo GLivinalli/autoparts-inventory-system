@@ -29,7 +29,7 @@ export function ManageListsModal({ open, onClose, onChanged }: ManageListsModalP
       setSectors(s);
       setEmployees(e);
     } catch (err) {
-      setError(getApiErrorMessage(err, "Nao foi possivel carregar as listas"));
+      setError(getApiErrorMessage(err, "Não foi possível carregar as listas"));
     }
   }
 
@@ -57,7 +57,7 @@ export function ManageListsModal({ open, onClose, onChanged }: ManageListsModalP
       await load();
       onChanged();
     } catch (err) {
-      setError(getApiErrorMessage(err, "Nao foi possivel adicionar"));
+      setError(getApiErrorMessage(err, "Não foi possível adicionar"));
     } finally {
       setBusy(false);
     }
@@ -77,7 +77,7 @@ export function ManageListsModal({ open, onClose, onChanged }: ManageListsModalP
       await load();
       onChanged();
     } catch (err) {
-      setError(getApiErrorMessage(err, "Nao foi possivel remover"));
+      setError(getApiErrorMessage(err, "Não foi possível remover"));
       setRemoving(null);
     } finally {
       setBusy(false);
@@ -154,7 +154,7 @@ export function ManageListsModal({ open, onClose, onChanged }: ManageListsModalP
 
           <div className="space-y-6">
             {renderSection("sector", "Setores", sectors, newSector, setNewSector, "Novo setor")}
-            {renderSection("employee", "Funcionarios", employees, newEmployee, setNewEmployee, "Novo funcionario")}
+            {renderSection("employee", "Funcionários", employees, newEmployee, setNewEmployee, "Novo funcionário")}
           </div>
 
           {error && <p className="mt-4 text-sm text-danger">{error}</p>}
@@ -175,7 +175,7 @@ export function ManageListsModal({ open, onClose, onChanged }: ManageListsModalP
         description={
           removing && (
             <>
-              Remover <strong>{removing.item.name}</strong> da lista? As retiradas ja registradas continuam com esse
+              Remover <strong>{removing.item.name}</strong> da lista? As retiradas já registradas continuam com esse
               nome no historico.
             </>
           )

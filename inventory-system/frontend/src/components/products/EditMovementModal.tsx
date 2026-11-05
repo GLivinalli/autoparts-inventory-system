@@ -71,7 +71,7 @@ export function EditMovementModal({ movement, onClose, onSaved }: EditMovementMo
       await editMovement(current.id, payload);
       onSaved();
     } catch (err) {
-      setError(getApiErrorMessage(err, "Nao foi possivel salvar"));
+      setError(getApiErrorMessage(err, "Não foi possível salvar"));
     } finally {
       setSaving(false);
     }
@@ -105,7 +105,7 @@ export function EditMovementModal({ movement, onClose, onSaved }: EditMovementMo
 
         {isExit && (
           <>
-            <label className="mb-1 block text-sm font-medium text-ink">Funcionario</label>
+            <label className="mb-1 block text-sm font-medium text-ink">Funcionário</label>
             <select
               value={employee}
               onChange={(e) => setEmployee(e.target.value)}

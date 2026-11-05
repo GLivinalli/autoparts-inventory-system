@@ -63,7 +63,7 @@ export function QuickEntryModal({ open, onClose, onSubmit }: QuickEntryModalProp
       setTotalValueReais("");
       setDescription("");
     } catch (err) {
-      setError(getApiErrorMessage(err, "Nao foi possivel registrar a entrada"));
+      setError(getApiErrorMessage(err, "Não foi possível registrar a entrada"));
       setConfirming(false);
     } finally {
       setSubmitting(false);
@@ -121,11 +121,11 @@ export function QuickEntryModal({ open, onClose, onSubmit }: QuickEntryModalProp
             className="mb-1 h-11 w-full rounded border border-line px-3 text-sm placeholder:text-muted focus:border-accent focus:placeholder:text-transparent"
           />
           <p className="mb-3 text-xs text-muted">
-            Valor total da compra dessas {parsedQuantity || 0} unidades - o custo por unidade e calculado sozinho.
+            Valor total da compra dessas {parsedQuantity || 0} unidades - o custo por unidade é calculado sozinho.
           </p>
 
           <label className="mb-1 block text-sm font-medium text-ink">
-            Observacao <span className="font-normal text-muted">(opcional)</span>
+            Observação <span className="font-normal text-muted">(opcional)</span>
           </label>
           <textarea
             value={description}

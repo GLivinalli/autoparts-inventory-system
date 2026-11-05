@@ -72,11 +72,11 @@ export function ProductDetailModal({ productId, onClose, onEdit, onChanged, refr
     setDeleting(true);
     try {
       await productsApi.deleteMovement(deletingMovement.id);
-      notify("Movimentacao excluida", "success");
+      notify("Movimentação excluída", "success");
       setDeletingMovement(null);
       onChanged();
     } catch (err) {
-      notify(getApiErrorMessage(err, "Nao foi possivel excluir"), "error");
+      notify(getApiErrorMessage(err, "Não foi possível excluir"), "error");
     } finally {
       setDeleting(false);
     }
@@ -113,7 +113,7 @@ export function ProductDetailModal({ productId, onClose, onEdit, onChanged, refr
       setEditingDateMovement(null);
       onChanged();
     } catch (err) {
-      notify(getApiErrorMessage(err, "Nao foi possivel alterar a data"), "error");
+      notify(getApiErrorMessage(err, "Não foi possível alterar a data"), "error");
     } finally {
       setSavingDate(false);
     }
@@ -141,7 +141,7 @@ export function ProductDetailModal({ productId, onClose, onEdit, onChanged, refr
       setEditingEntry(null);
       onChanged();
     } catch (err) {
-      setEntryError(getApiErrorMessage(err, "Nao foi possivel salvar a entrada"));
+      setEntryError(getApiErrorMessage(err, "Não foi possível salvar a entrada"));
     } finally {
       setSavingEntry(false);
     }
@@ -241,8 +241,8 @@ export function ProductDetailModal({ productId, onClose, onEdit, onChanged, refr
             )}
 
             <div className="mt-6">
-              <h4 className="mb-2 font-display text-lg font-semibold text-ink">Historico de movimentacoes</h4>
-              {history.length === 0 && <p className="text-sm text-muted">Nenhuma movimentacao registrada ainda.</p>}
+              <h4 className="mb-2 font-display text-lg font-semibold text-ink">Histórico de movimentações</h4>
+              {history.length === 0 && <p className="text-sm text-muted">Nenhuma movimentação registrada ainda.</p>}
               <ul className="divide-y divide-line rounded border border-line">
                 {history.map((m) => (
                   <li key={m.id} className="flex items-center justify-between gap-3 px-3 py-2.5">
@@ -300,7 +300,7 @@ export function ProductDetailModal({ productId, onClose, onEdit, onChanged, refr
                         <button
                           onClick={() => setDeletingMovement(m)}
                           className="rounded p-1.5 text-muted hover:bg-danger-soft hover:text-danger"
-                          aria-label="Excluir movimentacao"
+                          aria-label="Excluir movimentação"
                         >
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6h16Z" />
@@ -322,9 +322,9 @@ export function ProductDetailModal({ productId, onClose, onEdit, onChanged, refr
           <div className="w-full max-w-sm rounded-t-md bg-white p-5 shadow-lg sm:rounded-md">
             <h3 className="font-display text-xl font-semibold text-ink">Editar entrada</h3>
             <p className="mt-1 text-sm text-muted">
-              Corrige a quantidade e o valor total pago desta entrada. O estoque e o custo por unidade sao
-              recalculados, e as retiradas ja feitas desse lote passam a usar o custo corrigido. A quantidade nao pode
-              ser menor que a ja retirada.
+              Corrige a quantidade e o valor total pago desta entrada. O estoque e o custo por unidade são
+              recalculados, e as retiradas já feitas desse lote passam a usar o custo corrigido. A quantidade não pode
+              ser menor que a já retirada.
             </p>
 
             <label className="mb-1 mt-4 block text-sm font-medium text-ink">Quantidade</label>
@@ -376,7 +376,7 @@ export function ProductDetailModal({ productId, onClose, onEdit, onChanged, refr
             <h3 className="font-display text-xl font-semibold text-ink">Alterar data da entrada</h3>
             <p className="mt-1 text-sm text-muted">
               Entrada de {editingDateMovement.quantity} unidade(s). A nova data passa a valer no historico, nos dias em
-              estoque, na ordem do FIFO e nos relatorios por mes. Saidas que ja foram feitas nao sao recalculadas.
+              estoque, na ordem do FIFO e nos relatórios por mês. Saídas que já foram feitas não são recalculadas.
             </p>
             <label className="mb-1 mt-4 block text-sm font-medium text-ink">Nova data</label>
             <input
@@ -409,13 +409,13 @@ export function ProductDetailModal({ productId, onClose, onEdit, onChanged, refr
 
       <ConfirmDialog
         open={!!deletingMovement}
-        title="Excluir movimentacao"
+        title="Excluir movimentação"
         tone="danger"
         loading={deleting}
         description={
           deletingMovement?.type === ("ENTRADA" as MovementType)
-            ? "So e possivel excluir se este lote ainda nao foi consumido por nenhuma saida. Isso nao pode ser desfeito."
-            : "A quantidade sera devolvida automaticamente aos lotes de origem. Isso nao pode ser desfeito."
+            ? "Só é possível excluir se este lote ainda não foi consumido por nenhuma saída. Isso não pode ser desfeito."
+            : "A quantidade será devolvida automaticamente aos lotes de origem. Isso não pode ser desfeito."
         }
         confirmLabel="Excluir"
         onConfirm={handleConfirmDelete}
@@ -427,7 +427,7 @@ export function ProductDetailModal({ productId, onClose, onEdit, onChanged, refr
         title="Arquivar produto"
         tone="danger"
         loading={archiving}
-        description="O produto sai da listagem ativa, mas todo o historico e mantido. Voce pode reativar depois."
+        description="O produto sai da listagem ativa, mas todo o histórico é mantido. Você pode reativar depois."
         confirmLabel="Arquivar"
         onConfirm={handleArchiveToggle}
         onCancel={() => setConfirmingArchive(false)}

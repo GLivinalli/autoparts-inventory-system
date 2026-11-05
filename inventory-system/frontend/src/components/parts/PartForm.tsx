@@ -82,7 +82,7 @@ export function PartForm({
 
   function handleRequestClose() {
     const isDirty = JSON.stringify(values) !== initialSnapshotRef.current;
-    if (isDirty && !window.confirm("Voce tem alteracoes nao salvas. Deseja realmente fechar sem salvar?")) {
+    if (isDirty && !window.confirm("Você tem alterações não salvas. Deseja realmente fechar sem salvar?")) {
       return;
     }
     onClose();
@@ -97,7 +97,7 @@ export function PartForm({
       setValues((v) => ({ ...v, manufacturerId: created.id }));
       setNewManufacturer("");
     } catch (err) {
-      setError(getApiErrorMessage(err, "Nao foi possivel cadastrar a montadora"));
+      setError(getApiErrorMessage(err, "Não foi possível cadastrar a montadora"));
     } finally {
       setAddingManufacturer(false);
     }
@@ -116,7 +116,7 @@ export function PartForm({
     try {
       await onSubmit({ ...values, inventoryDate: toISODate(values.inventoryDate) });
     } catch (err) {
-      setError(getApiErrorMessage(err, "Nao foi possivel salvar a peca"));
+      setError(getApiErrorMessage(err, "Não foi possível salvar a peça"));
     } finally {
       setSubmitting(false);
     }
@@ -194,7 +194,7 @@ export function PartForm({
 
           <div>
             <label className="mb-1 block text-sm font-medium text-ink">
-              SKU <span className="font-normal text-muted">(opcional - qualquer codigo, ou deixe em branco)</span>
+              SKU <span className="font-normal text-muted">(opcional - qualquer código, ou deixe em branco)</span>
             </label>
             <input
               value={values.sku}
@@ -253,7 +253,7 @@ export function PartForm({
               </div>
             )}
             <div className={editingPart ? "col-span-2" : ""}>
-              <label className="mb-1 block text-sm font-medium text-ink">Data do inventario</label>
+              <label className="mb-1 block text-sm font-medium text-ink">Data do inventário</label>
               <input
                 type="date"
                 required

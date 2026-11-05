@@ -45,7 +45,7 @@ export function FilterBar({ manufacturers, values, onChange }: FilterBarProps) {
 
       <select className={selectClass} value={values.stock} onChange={(e) => set("stock", e.target.value)}>
         <option value="">Estoque</option>
-        <option value="available">Disponivel</option>
+        <option value="available">Disponível</option>
         <option value="out">Sem estoque</option>
       </select>
 
