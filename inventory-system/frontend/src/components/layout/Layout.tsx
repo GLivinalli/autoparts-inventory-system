@@ -9,9 +9,12 @@ function MobileTopBar() {
   const { user, logout } = useAuth();
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between bg-ink px-4 py-2.5 lg:hidden">
-      <div className="min-w-0">
-        <p className="font-display text-xl font-semibold leading-none text-white">Auto Gama</p>
-        <p className="mt-0.5 truncate text-[11px] text-white/50">{user?.name}</p>
+      <div className="flex min-w-0 items-center gap-2.5">
+        <img src="/logo-autogama.jpg" alt="Auto Gama" className="h-10 w-10 shrink-0 rounded object-cover object-top" />
+        <div className="min-w-0">
+          <p className="font-display text-xl font-semibold leading-none text-white">Auto Gama</p>
+          <p className="mt-0.5 truncate text-[11px] text-white/50">{user?.name}</p>
+        </div>
       </div>
       <div className="flex shrink-0 items-center gap-1">
         <Link to="/trocar-senha" className="rounded px-3 py-2 text-xs font-medium text-white/70 hover:bg-white/5 hover:text-white">

@@ -60,9 +60,9 @@ export function Sidebar() {
 
   return (
     <aside className="hidden w-60 shrink-0 flex-col bg-ink px-3 py-5 lg:flex">
-      <div className="mb-8 px-2">
-        <p className="font-display text-2xl font-semibold leading-none text-white">Auto Gama</p>
-        <p className="mt-1 text-xs uppercase tracking-wide text-white/50">Controle de inventário</p>
+      <div className="mb-8 px-2 text-center">
+        <img src="/logo-autogama.jpg" alt="Auto Gama Service" className="mx-auto mb-2 h-28 w-auto rounded-md" />
+        <p className="text-xs uppercase tracking-wide text-white/50">Controle de inventário</p>
       </div>
 
       <nav className="flex flex-1 flex-col gap-1">
