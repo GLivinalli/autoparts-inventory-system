@@ -6,6 +6,7 @@ import { Spinner } from "@/components/common/Spinner";
 import { Badge } from "@/components/common/Badge";
 import { formatDateTime } from "@/utils/labels";
 import { useAuth } from "@/context/AuthContext";
+import { PageHeader } from "@/components/common/PageHeader";
 
 function StatCard({ label, value, tone }: { label: string; value: number; tone?: "danger" | "success" }) {
   return (
@@ -41,20 +42,20 @@ export function Dashboard() {
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-3xl font-semibold text-ink">Bem-vindo, {user?.name.split(" ")[0]}!</h1>
-          <p className="text-sm text-muted">Visão geral do inventário</p>
-        </div>
-        <Link
-          to="/pecas"
-          className="hidden rounded bg-accent px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-dark sm:block"
-        >
-          Ver peças
-        </Link>
-      </div>
+      <PageHeader
+        title={`Bem-vindo, ${user?.name.split(" ")[0]}!`}
+        subtitle="Visão geral do inventário"
+        actions={
+          <Link
+            to="/pecas"
+            className="rounded bg-accent px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-dark"
+          >
+            Ver peças
+          </Link>
+        }
+      />
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard label="Peças cadastradas" value={totals.totalParts} />
         <StatCard label="Total em estoque" value={totals.totalQuantity} />
         <StatCard label="Com dano" value={totals.damaged} tone="danger" />

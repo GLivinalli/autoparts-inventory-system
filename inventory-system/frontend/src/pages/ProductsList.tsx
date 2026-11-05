@@ -17,6 +17,7 @@ import { getStockSummary } from "@/api/productStock";
 import type { StockSummary } from "@/api/productStock";
 import { getApiErrorMessage } from "@/api/client";
 import { formatCentsToBRL } from "@/utils/labels";
+import { PageHeader } from "@/components/common/PageHeader";
 
 const actionButtonClass =
   "rounded border border-line bg-white px-4 py-2.5 text-sm font-medium text-ink hover:bg-surface";
@@ -140,19 +141,19 @@ export function ProductsList() {
         )}
       </div>
 
-      <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h1 className="font-display text-3xl font-semibold text-ink">{viewArchived ? "Produtos arquivados" : "Produtos"}</h1>
-          <p className="text-sm text-muted">Almoxarifado com custeio FIFO por lote</p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setViewArchived((v) => !v)}
-          className="text-sm font-medium text-steel hover:underline"
-        >
-          {viewArchived ? "Ver produtos ativos" : "Ver produtos arquivados"}
-        </button>
-      </div>
+      <PageHeader
+        title={viewArchived ? "Produtos arquivados" : "Produtos"}
+        subtitle="Almoxarifado com custeio FIFO por lote"
+        actions={
+          <button
+            type="button"
+            onClick={() => setViewArchived((v) => !v)}
+            className="text-sm font-medium text-steel hover:underline"
+          >
+            {viewArchived ? "Ver produtos ativos" : "Ver produtos arquivados"}
+          </button>
+        }
+      />
 
       {summary && (
         <div className="mt-3 inline-flex flex-col rounded border border-line bg-white px-4 py-3">

@@ -176,7 +176,7 @@ export function ManageListsModal({ open, onClose, onChanged }: ManageListsModalP
           removing && (
             <>
               Remover <strong>{removing.item.name}</strong> da lista? As retiradas já registradas continuam com esse
-              nome no historico.
+              nome no histórico.
             </>
           )
         }

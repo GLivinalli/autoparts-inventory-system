@@ -9,6 +9,7 @@ import { getApiErrorMessage } from "@/api/client";
 import { listAllProductMovements } from "@/api/productReport";
 import { formatCentsToBRL } from "@/utils/labels";
 import { onlyDigits, sanitizeMoney } from "@/utils/inputs";
+import { PageHeader } from "@/components/common/PageHeader";
 
 const actionButtonClass =
   "rounded border border-line bg-white px-4 py-2.5 text-sm font-medium text-ink hover:bg-surface";
@@ -215,11 +216,15 @@ export function ProductReports() {
         </NavLink>
       </div>
 
-      <h1 className="font-display text-3xl font-semibold text-ink">Relatórios</h1>
-      <p className="mb-4 text-sm text-muted">
-        Todas as entradas e retiradas em uma tabela, com filtro em cada coluna
-        {isAdmin && ". Clique em uma linha para editar data, funcionario ou quantidade"}
-      </p>
+      <PageHeader
+        title="Relatórios"
+        subtitle={
+          <>
+            Todas as entradas e retiradas em uma tabela, com filtro em cada coluna
+            {isAdmin && ". Clique em uma linha para editar data, funcionário ou quantidade"}
+          </>
+        }
+      />
 
       {loading ? (
         <div className="flex justify-center py-16">

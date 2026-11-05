@@ -17,6 +17,7 @@ import * as manufacturersApi from "@/api/manufacturers";
 import * as movementsApi from "@/api/movements";
 import { getApiErrorMessage } from "@/api/client";
 import type { MovementType } from "@/types";
+import { PageHeader } from "@/components/common/PageHeader";
 
 const EMPTY_FILTERS: FilterValues = { manufacturerId: "", condition: "", stock: "" };
 
@@ -138,44 +139,42 @@ export function PartsList() {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-3xl font-semibold text-ink">
-            {viewArchived ? "Peças arquivadas" : "Peças"}
-          </h1>
-          <p className="text-sm text-muted">
-            {viewArchived
-              ? "Peças fora do inventário ativo — o histórico de cada uma continua preservado"
-              : "Consulte, cadastre e controle o estoque"}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setViewArchived((v) => !v)}
-            className="hidden rounded border border-line px-4 py-2.5 text-sm font-medium text-ink hover:bg-white sm:block"
-          >
-            {viewArchived ? "Ver ativas" : "Ver arquivadas"}
-          </button>
-          {!viewArchived && can("canCreateParts") && (
+      <PageHeader
+        title={viewArchived ? "Peças arquivadas" : "Peças"}
+        subtitle={
+          viewArchived
+            ? "Peças fora do inventário ativo — o histórico de cada uma continua preservado"
+            : "Consulte, cadastre e controle o estoque"
+        }
+        actions={
+          <>
             <button
-              onClick={() => {
-                setEditingPart(null);
-                setFormOpen(true);
-              }}
-              className="hidden rounded bg-accent px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-dark sm:block"
+              onClick={() => setViewArchived((v) => !v)}
+              className="hidden rounded border border-line px-4 py-2.5 text-sm font-medium text-ink hover:bg-white sm:block"
             >
-              Cadastrar peca
+              {viewArchived ? "Ver ativas" : "Ver arquivadas"}
             </button>
-          )}
-        </div>
-      </div>
+            {!viewArchived && can("canCreateParts") && (
+              <button
+                onClick={() => {
+                  setEditingPart(null);
+                  setFormOpen(true);
+                }}
+                className="hidden rounded bg-accent px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-dark sm:block"
+              >
+                Cadastrar peça
+              </button>
+            )}
+          </>
+        }
+      />
 
       <div className="mb-3 sm:hidden">
         <button
           onClick={() => setViewArchived((v) => !v)}
           className="w-full rounded border border-line bg-white px-4 py-2.5 text-sm font-medium text-ink"
         >
-          {viewArchived ? "Ver pecas ativas" : "Ver pecas arquivadas"}
+          {viewArchived ? "Ver peças ativas" : "Ver peças arquivadas"}
         </button>
       </div>
 
@@ -222,7 +221,7 @@ export function PartsList() {
             setFormOpen(true);
           }}
           className="fixed bottom-20 right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-white shadow-lg sm:hidden"
-          aria-label="Cadastrar peca"
+          aria-label="Cadastrar peça"
         >
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M12 5v14M5 12h14" />

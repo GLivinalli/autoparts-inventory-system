@@ -5,6 +5,7 @@ import { Spinner } from "@/components/common/Spinner";
 import { Badge } from "@/components/common/Badge";
 import { Pagination } from "@/components/common/Pagination";
 import { formatDateTime } from "@/utils/labels";
+import { PageHeader } from "@/components/common/PageHeader";
 
 export function History() {
   const [movements, setMovements] = useState<Movement[]>([]);
@@ -25,8 +26,10 @@ export function History() {
 
   return (
     <div>
-      <h1 className="font-display text-3xl font-semibold text-ink">Histórico de movimentação</h1>
-      <p className="mb-5 text-sm text-muted">Registro completo e definitivo de todas as entradas e retiradas</p>
+      <PageHeader
+        title="Histórico de movimentação"
+        subtitle="Registro completo e definitivo de todas as entradas e retiradas"
+      />
 
       {loading ? (
         <div className="flex justify-center py-16">

@@ -6,11 +6,12 @@ import { Badge } from "@/components/common/Badge";
 import { useToast } from "@/context/ToastContext";
 import { getApiErrorMessage } from "@/api/client";
 import { ROLE_LABELS } from "@/utils/labels";
+import { PageHeader } from "@/components/common/PageHeader";
 
 const PERMISSION_LABELS: Record<keyof UserPermissions, string> = {
-  canCreateParts: "Cadastrar pecas",
-  canEditParts: "Editar pecas",
-  canArchiveParts: "Arquivar pecas",
+  canCreateParts: "Cadastrar peças",
+  canEditParts: "Editar peças",
+  canArchiveParts: "Arquivar peças",
   canStockIn: "Fazer entradas (Peças)",
   canStockOut: "Fazer retiradas (Peças)",
   canManageUsers: "Gerenciar usuarios",
@@ -99,18 +100,18 @@ export function Users() {
 
   return (
     <div>
-      <div className="mb-5 flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-3xl font-semibold text-ink">Usuários</h1>
-          <p className="text-sm text-muted">Gerencie acessos e permissões</p>
-        </div>
-        <button
-          onClick={() => setShowCreate(true)}
-          className="rounded bg-accent px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-dark"
-        >
-          Novo usuario
-        </button>
-      </div>
+      <PageHeader
+        title="Usuários"
+        subtitle="Gerencie acessos e permissões"
+        actions={
+          <button
+            onClick={() => setShowCreate(true)}
+            className="rounded bg-accent px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-dark"
+          >
+            Novo usuário
+          </button>
+        }
+      />
 
       {loading ? (
         <div className="flex justify-center py-16">
@@ -184,7 +185,7 @@ export function Users() {
       {showCreate && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 sm:items-center sm:p-4">
           <form onSubmit={handleCreate} className="w-full max-w-md rounded-t-md bg-white p-6 shadow-lg sm:rounded-md">
-            <h2 className="mb-4 font-display text-2xl font-semibold text-ink">Novo usuario</h2>
+            <h2 className="mb-4 font-display text-2xl font-semibold text-ink">Novo usuário</h2>
 
             <label className="mb-1 block text-sm font-medium text-ink">Nome</label>
             <input
@@ -249,7 +250,7 @@ export function Users() {
                 disabled={submitting}
                 className="rounded bg-accent px-5 py-2.5 text-sm font-semibold text-white hover:bg-accent-dark disabled:opacity-60"
               >
-                {submitting ? "Salvando..." : "Criar usuario"}
+                {submitting ? "Salvando..." : "Criar usuário"}
               </button>
             </div>
           </form>
