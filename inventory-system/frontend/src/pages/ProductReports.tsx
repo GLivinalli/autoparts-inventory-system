@@ -266,6 +266,25 @@ export function ProductReports() {
             </div>
           </div>
 
+          <div className="mb-2.5 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <div className="rounded border border-line bg-white px-4 py-3">
+              <p className="text-xs font-medium text-muted">Entradas · {entries.length} registros</p>
+              <div className="mt-1 flex items-baseline justify-between gap-3">
+                <span className="font-display text-2xl font-semibold text-success">
+                  +{sum(entries, (m) => m.quantity)}
+                </span>
+                <span className="text-lg font-semibold text-ink">{formatCentsToBRL(sum(entries, (m) => m.totalCents))}</span>
+              </div>
+            </div>
+            <div className="rounded border border-line bg-white px-4 py-3">
+              <p className="text-xs font-medium text-muted">Retiradas · {exits.length} registros</p>
+              <div className="mt-1 flex items-baseline justify-between gap-3">
+                <span className="font-display text-2xl font-semibold text-danger">−{sum(exits, (m) => m.quantity)}</span>
+                <span className="text-lg font-semibold text-ink">{formatCentsToBRL(sum(exits, (m) => m.totalCents))}</span>
+              </div>
+            </div>
+          </div>
+
           <div className="overflow-x-auto rounded border border-line bg-white">
             <table className="w-full min-w-[760px] table-fixed border-collapse text-sm">
               <colgroup>
@@ -381,22 +400,6 @@ export function ProductReports() {
                   ))
                 )}
               </tbody>
-              <tfoot className="bg-surface-1">
-                <tr className="border-t border-line font-medium">
-                  <td colSpan={4} className="px-2 py-2 text-ink">
-                    Entradas · {entries.length} registros
-                  </td>
-                  <td className="px-2 py-2 text-right text-success">+{sum(entries, (m) => m.quantity)}</td>
-                  <td className="px-2 py-2 text-right text-ink">{formatCentsToBRL(sum(entries, (m) => m.totalCents))}</td>
-                </tr>
-                <tr className="border-t border-line font-medium">
-                  <td colSpan={4} className="px-2 py-2 text-ink">
-                    Retiradas · {exits.length} registros
-                  </td>
-                  <td className="px-2 py-2 text-right text-danger">−{sum(exits, (m) => m.quantity)}</td>
-                  <td className="px-2 py-2 text-right text-ink">{formatCentsToBRL(sum(exits, (m) => m.totalCents))}</td>
-                </tr>
-              </tfoot>
             </table>
           </div>
         </div>
