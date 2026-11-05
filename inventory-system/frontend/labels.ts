@@ -1,0 +1,41 @@
+import type { PartCondition, PartSide, Role } from "@/types";
+
+export const SIDE_LABELS: Record<PartSide, string> = {
+  DIANTEIRO: "Dianteiro",
+  TRASEIRO: "Traseiro",
+  LATERAL: "Lateral",
+  ESQUERDO: "Esquerdo",
+  DIREITO: "Direito",
+  INTERNO: "Interno",
+  EXTERNO: "Externo",
+  SUPERIOR: "Superior",
+  INFERIOR: "Inferior",
+  CENTRAL: "Central",
+  NAO_SE_APLICA: "Não se aplica",
+};
+
+export const CONDITION_LABELS: Record<PartCondition, string> = {
+  SEM_DANO: "Sem dano",
+  COM_DANO: "Com dano",
+};
+
+export const ROLE_LABELS: Record<Role, string> = {
+  ADMIN: "Administrador",
+  USER: "Usuário comum",
+};
+
+export function formatDate(value: string): string {
+  const d = new Date(value);
+  return d.toLocaleDateString("pt-BR", { timeZone: "UTC" });
+}
+
+export function formatDateTime(value: string): string {
+  const d = new Date(value);
+  return d.toLocaleString("pt-BR");
+}
+
+// Modulo de Produtos guarda tudo em centavos (Int) - essa funcao e o unico
+// lugar que converte para o formato de moeda exibido na tela.
+export function formatCentsToBRL(cents: number): string {
+  return (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
