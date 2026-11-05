@@ -14,7 +14,7 @@ export function Sidebar() {
   return (
     <aside className="hidden w-60 shrink-0 flex-col bg-ink px-3 py-5 lg:flex">
       <div className="mb-8 px-2 text-center">
-        <img src="/logo-autogama.jpg" alt="Auto Gama Service" className="mx-auto mb-2 h-28 w-auto rounded-md" />
+        <img src="/logo-autogama.png" alt="Auto Gama Service" className="mx-auto mb-3 h-28 w-auto" />
         <p className="text-xs uppercase tracking-wide text-white/50">Controle de inventário</p>
       </div>
 

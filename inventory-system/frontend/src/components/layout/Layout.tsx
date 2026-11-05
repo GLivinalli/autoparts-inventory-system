@@ -10,7 +10,7 @@ function MobileTopBar() {
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between bg-ink px-4 py-2.5 lg:hidden">
       <div className="flex min-w-0 items-center gap-2.5">
-        <img src="/logo-autogama.jpg" alt="Auto Gama" className="h-10 w-10 shrink-0 rounded object-cover object-top" />
+        <img src="/logo-autogama.png" alt="Auto Gama" className="h-10 w-10 shrink-0 object-contain" />
         <div className="min-w-0">
           <p className="font-display text-xl font-semibold leading-none text-white">Auto Gama</p>
           <p className="mt-0.5 truncate text-[11px] text-white/50">{user?.name}</p>

@@ -43,9 +43,9 @@ export function Login() {
       <div className="relative w-full max-w-sm">
         <div className="mb-8 text-center">
           <img
-            src="/logo-autogama.jpg"
+            src="/logo-autogama.png"
             alt="Auto Gama Service"
-            className="mx-auto h-44 w-auto rounded-md sm:h-52"
+            className="mx-auto h-44 w-auto sm:h-52"
           />
           <p className="mt-3 text-sm text-white/60">Controle de inventário</p>
         </div>
