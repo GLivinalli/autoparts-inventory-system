@@ -46,10 +46,10 @@ function pdfMoney(cents: number) {
   return formatCentsToBRL(cents).replace(/\u00a0/g, " ");
 }
 
-// Carrega o logo (circulo, com fundo proprio) para colocar no canto do PDF.
+// Carrega o logo (PNG transparente); no PDF ele vai sobre um quadro escuro.
 async function loadLogoDataUrl(): Promise<string | null> {
   try {
-    const res = await fetch("/logo-autogama-circulo.png");
+    const res = await fetch("/logo-autogama.png");
     if (!res.ok) return null;
     const blob = await res.blob();
     if (!blob.type.startsWith("image/")) return null;
@@ -158,7 +158,11 @@ export function ProductReports() {
       const logo = await loadLogoDataUrl();
       if (logo) {
         try {
-          doc.addImage(logo, "PNG", pageWidth - 14 - 24, 8, 24, 24);
+          // Quadro escuro com cantos arredondados, igual ao fundo do site,
+          // para o texto branco do logo aparecer no papel branco.
+          doc.setFillColor(23, 26, 33);
+          doc.roundedRect(pageWidth - 14 - 30, 8, 30, 30, 3, 3, "F");
+          doc.addImage(logo, "PNG", pageWidth - 14 - 28, 10, 26, 25.2);
         } catch {
           // Se o logo nao puder ser lido, o PDF sai normalmente sem ele.
         }
@@ -171,36 +175,43 @@ export function ProductReports() {
       doc.text(`Gerado em ${new Date().toLocaleString("pt-BR")}`, 14, 22);
 
       const filtersText = filterParts.length ? `Filtros: ${filterParts.join("  |  ")}` : "Sem filtros (todos os registros)";
-      const filterLines = doc.splitTextToSize(filtersText, 225) as string[];
+      const filterLines = doc.splitTextToSize(filtersText, 215) as string[];
       doc.text(filterLines, 14, 27);
       doc.setTextColor(0);
 
-      // Totais sempre no inicio, antes da tabela.
-      const totalsStartY = Math.max(27 + filterLines.length * 4 + 3, 36);
-      let totalsEndY = totalsStartY + 28;
-      autoTable(doc, {
-        didDrawPage: (data) => {
-          if (data.cursor && typeof data.cursor.y === "number") totalsEndY = data.cursor.y;
-        },
-        startY: totalsStartY,
-        head: [["Resumo", "Registros", "Quantidade", "Valor total"]],
-        body: [
-          ["Entradas", String(entries.length), `+${sum(entries, (m) => m.quantity)}`, pdfMoney(sum(entries, (m) => m.totalCents))],
-          ["Retiradas", String(exits.length), `-${sum(exits, (m) => m.quantity)}`, pdfMoney(sum(exits, (m) => m.totalCents))],
-        ],
-        styles: { fontSize: 10 },
-        headStyles: { fillColor: [201, 122, 10] },
-        bodyStyles: { fontStyle: "bold", fillColor: [243, 244, 246] },
-        columnStyles: {
-          1: { halign: "right" },
-          2: { halign: "right" },
-          3: { halign: "right" },
-        },
-        tableWidth: 150,
-        margin: { left: 14 },
-      });
+      // Totais sempre no inicio: dois cartoes lado a lado, antes da tabela.
+      const totalsStartY = Math.max(27 + filterLines.length * 4 + 4, 42);
+      const cardW = 100;
+      const cardH = 24;
+      const drawCard = (
+        x: number,
+        label: string,
+        count: number,
+        quantity: string,
+        valueCents: number,
+        color: [number, number, number]
+      ) => {
+        doc.setFillColor(246, 245, 242);
+        doc.setDrawColor(222, 219, 211);
+        doc.roundedRect(x, totalsStartY, cardW, cardH, 2, 2, "FD");
+        doc.setFillColor(color[0], color[1], color[2]);
+        doc.roundedRect(x, totalsStartY, 2.5, cardH, 1, 1, "F");
+        doc.setFontSize(9);
+        doc.setTextColor(107, 111, 118);
+        doc.text(`${label} · ${count} registros`, x + 7, totalsStartY + 7);
+        doc.setFontSize(16);
+        doc.setTextColor(23, 26, 33);
+        doc.text(pdfMoney(valueCents), x + 7, totalsStartY + 16);
+        doc.setFontSize(10);
+        doc.setTextColor(color[0], color[1], color[2]);
+        doc.text(`${quantity} unid.`, x + cardW - 5, totalsStartY + 16, { align: "right" });
+      };
+      drawCard(14, "Entradas", entries.length, `+${sum(entries, (m) => m.quantity)}`, sum(entries, (m) => m.totalCents), [47, 122, 76]);
+      drawCard(14 + cardW + 6, "Retiradas", exits.length, `-${sum(exits, (m) => m.quantity)}`, sum(exits, (m) => m.totalCents), [178, 58, 46]);
+      doc.setTextColor(0);
+      doc.setDrawColor(0);
 
-      const afterTotalsY = totalsEndY + 6;
+      const afterTotalsY = totalsStartY + cardH + 7;
       autoTable(doc, {
         startY: afterTotalsY,
         head: [["Data", "Setor", "Funcionário", "Produto", "Quantidade", "Valor"]],
