@@ -1,55 +1,33 @@
 import { NavLink } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { IconDashboard, IconParts, IconHistory, IconUsers, IconBox } from "./icons";
 
+// Todos os itens tem a mesma altura, o mesmo tamanho de icone e o texto em uma
+// unica linha, para os icones ficarem alinhados na mesma linha horizontal.
 const itemBase =
-  "flex flex-1 flex-col items-center gap-1 border-t-2 py-2.5 text-[11px] font-medium transition-colors";
+  "flex min-w-0 flex-1 flex-col items-center justify-center gap-1 border-t-2 px-1 py-2 text-[11px] font-medium leading-none transition-colors";
 const active = "border-accent text-accent";
 const inactive = "border-transparent text-white/60";
+
+function Item({ to, end, label, icon }: { to: string; end?: boolean; label: string; icon: JSX.Element }) {
+  return (
+    <NavLink to={to} end={end} className={({ isActive }) => `${itemBase} ${isActive ? active : inactive}`}>
+      <span className="flex h-6 w-6 items-center justify-center">{icon}</span>
+      <span className="w-full truncate text-center">{label}</span>
+    </NavLink>
+  );
+}
 
 export function MobileNav() {
   const { isAdmin } = useAuth();
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-white/10 bg-ink pb-[env(safe-area-inset-bottom)] lg:hidden">
-      <NavLink to="/" end className={({ isActive }) => `${itemBase} ${isActive ? active : inactive}`}>
-        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <rect x="3" y="3" width="7" height="9" rx="1" />
-          <rect x="14" y="3" width="7" height="5" rx="1" />
-          <rect x="14" y="12" width="7" height="9" rx="1" />
-          <rect x="3" y="16" width="7" height="5" rx="1" />
-        </svg>
-        Dashboard
-      </NavLink>
-      <NavLink to="/pecas" className={({ isActive }) => `${itemBase} ${isActive ? active : inactive}`}>
-        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M3 8h18l-1.5 12.5A2 2 0 0 1 17.5 22h-11a2 2 0 0 1-2-1.5L3 8Z" />
-          <path d="M9 12h6" />
-        </svg>
-        Peças
-      </NavLink>
-      <NavLink to="/produtos" className={({ isActive }) => `${itemBase} ${isActive ? active : inactive}`}>
-        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
-          <path d="m3.3 7 8.7 5 8.7-5M12 22V12" />
-        </svg>
-        Produtos
-      </NavLink>
-      <NavLink to="/historico" className={({ isActive }) => `${itemBase} ${isActive ? active : inactive}`}>
-        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M3.05 13A9 9 0 1 0 6 5.3L3 8" />
-          <path d="M12 7v5l3 3" />
-        </svg>
-        Histórico
-      </NavLink>
-      {isAdmin && (
-        <NavLink to="/usuarios" className={({ isActive }) => `${itemBase} ${isActive ? active : inactive}`}>
-          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-            <circle cx="9" cy="7" r="4" />
-          </svg>
-          Usuários
-        </NavLink>
-      )}
+    <nav className="fixed inset-x-0 bottom-0 z-40 flex items-stretch border-t border-white/10 bg-ink pb-[env(safe-area-inset-bottom)] lg:hidden">
+      <Item to="/" end label="Dashboard" icon={<IconDashboard size={22} />} />
+      <Item to="/pecas" label="Peças" icon={<IconParts size={22} />} />
+      <Item to="/produtos" label="Produtos" icon={<IconBox size={22} />} />
+      <Item to="/historico" label="Histórico" icon={<IconHistory size={22} />} />
+      {isAdmin && <Item to="/usuarios" label="Usuários" icon={<IconUsers size={22} />} />}
     </nav>
   );
 }
