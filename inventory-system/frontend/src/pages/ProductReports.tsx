@@ -46,6 +46,23 @@ function pdfMoney(cents: number) {
   return formatCentsToBRL(cents).replace(/\u00a0/g, " ");
 }
 
+// Carrega o logo (circulo, com fundo proprio) para colocar no canto do PDF.
+async function loadLogoDataUrl(): Promise<string | null> {
+  try {
+    const res = await fetch("/logo-autogama-circulo.png");
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
 export function ProductReports() {
   const { isAdmin } = useAuth();
   const { notify } = useToast();
@@ -136,6 +153,10 @@ export function ProductReports() {
       if (minValue) filterParts.push(`Valor mín.: R$ ${minValue}`);
 
       const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const logo = await loadLogoDataUrl();
+      if (logo) doc.addImage(logo, "PNG", pageWidth - 14 - 24, 8, 24, 24);
+
       doc.setFontSize(16);
       doc.text("Relatório de produtos", 14, 16);
       doc.setFontSize(9);
@@ -143,12 +164,34 @@ export function ProductReports() {
       doc.text(`Gerado em ${new Date().toLocaleString("pt-BR")}`, 14, 22);
 
       const filtersText = filterParts.length ? `Filtros: ${filterParts.join("  |  ")}` : "Sem filtros (todos os registros)";
-      const filterLines = doc.splitTextToSize(filtersText, 269) as string[];
+      const filterLines = doc.splitTextToSize(filtersText, 225) as string[];
       doc.text(filterLines, 14, 27);
       doc.setTextColor(0);
 
+      // Totais sempre no inicio, antes da tabela.
+      const totalsStartY = Math.max(27 + filterLines.length * 4 + 3, 36);
       autoTable(doc, {
-        startY: 27 + filterLines.length * 4 + 3,
+        startY: totalsStartY,
+        head: [["Resumo", "Registros", "Quantidade", "Valor total"]],
+        body: [
+          ["Entradas", String(entries.length), `+${sum(entries, (m) => m.quantity)}`, pdfMoney(sum(entries, (m) => m.totalCents))],
+          ["Retiradas", String(exits.length), `-${sum(exits, (m) => m.quantity)}`, pdfMoney(sum(exits, (m) => m.totalCents))],
+        ],
+        styles: { fontSize: 10 },
+        headStyles: { fillColor: [201, 122, 10] },
+        bodyStyles: { fontStyle: "bold", fillColor: [243, 244, 246] },
+        columnStyles: {
+          1: { halign: "right" },
+          2: { halign: "right" },
+          3: { halign: "right" },
+        },
+        tableWidth: 150,
+        margin: { left: 14 },
+      });
+
+      const afterTotalsY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 6;
+      autoTable(doc, {
+        startY: afterTotalsY,
         head: [["Data", "Setor", "Funcionário", "Produto", "Quantidade", "Valor"]],
         body: rows.map((m) => [
           new Date(m.createdAt).toLocaleDateString("pt-BR"),
@@ -158,22 +201,8 @@ export function ProductReports() {
           `${m.type === "ENTRADA" ? "+" : "-"}${m.quantity}`,
           pdfMoney(m.totalCents),
         ]),
-        foot: [
-          [
-            { content: `Entradas - ${entries.length} registros`, colSpan: 4 },
-            `+${sum(entries, (m) => m.quantity)}`,
-            pdfMoney(sum(entries, (m) => m.totalCents)),
-          ],
-          [
-            { content: `Retiradas - ${exits.length} registros`, colSpan: 4 },
-            `-${sum(exits, (m) => m.quantity)}`,
-            pdfMoney(sum(exits, (m) => m.totalCents)),
-          ],
-        ],
-        showFoot: "lastPage",
         styles: { fontSize: 9 },
         headStyles: { fillColor: [31, 41, 55] },
-        footStyles: { fillColor: [243, 244, 246], textColor: 20, fontStyle: "bold" },
         columnStyles: {
           0: { cellWidth: 24 },
           1: { cellWidth: 30 },
